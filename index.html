@@ -1,2155 +1,2054 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>🔎 Dico</title>
-
-<style>
-:root {
-    --bg: #10151c;
-    --card: #1b222c;
-    --card2: #242d38;
-    --text: #f4f5f7;
-    --muted: #9ba7b5;
-    --accent: #f0a202;
-    --accent-dark: #c98200;
-    --green: #4caf50;
-    --red: #ef5350;
-    --blue: #4da3ff;
-    --border: rgba(255,255,255,0.12);
-}
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at top, #263343 0%, var(--bg) 55%);
-    color: var(--text);
-    font-family: Arial, sans-serif;
-    padding: 20px 12px 50px;
-}
-
-.container {
-    width: 100%;
-    max-width: 520px;
-    margin: auto;
-}
-
-h1 {
-    text-align: center;
-    margin: 5px 0 4px;
-    font-size: 2rem;
-}
-
-.subtitle {
-    text-align: center;
-    color: var(--muted);
-    margin-bottom: 20px;
-}
-
-.card {
-    background: rgba(27,34,44,0.96);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 18px;
-    margin-bottom: 15px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* =========================
-   PSEUDO
-========================= */
-
-label {
-    display: block;
-    color: var(--muted);
-    margin-bottom: 7px;
-}
-
-input[type="text"] {
-    width: 100%;
-    padding: 13px;
-    border-radius: 9px;
-    border: 1px solid var(--border);
-    background: #10151c;
-    color: white;
-    font-size: 1rem;
-    outline: none;
-}
-
-input[type="text"]:focus {
-    border-color: var(--accent);
-}
-
-button {
-    border: 0;
-    border-radius: 9px;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.main-button {
-    width: 100%;
-    margin-top: 12px;
-    padding: 14px;
-    background: var(--accent);
-    color: #1a1200;
-    font-size: 1rem;
-}
-
-.main-button:hover {
-    background: var(--accent-dark);
-}
-
-/* =========================
-   INFOS
-========================= */
-
-.info-line {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-bottom: 15px;
-    color: var(--muted);
-    font-size: 0.9rem;
-}
-
-.info-line strong {
-    color: var(--text);
-}
-
-/* =========================
-   ZONE DE RECHERCHE
-========================= */
-
-.search-title {
-    text-align: center;
-    font-size: 1rem;
-    color: var(--muted);
-    margin-bottom: 8px;
-}
-
-.current-range {
-    text-align: center;
-    margin-bottom: 16px;
-}
-
-.range-word {
-    display: inline-block;
-    background: var(--card2);
-    border-radius: 7px;
-    padding: 7px 12px;
-    font-weight: bold;
-}
-
-.range-arrow {
-    color: var(--accent);
-    margin: 0 7px;
-}
-
-/* =========================
-   SAISIE
-========================= */
-
-.guess-row {
-    display: flex;
-    gap: 8px;
-}
-
-.guess-row input {
-    flex: 1;
-    min-width: 0;
-}
-
-.guess-button {
-    width: 105px;
-    background: var(--accent);
-    color: #171000;
-    font-weight: bold;
-}
-
-.guess-button:hover {
-    background: var(--accent-dark);
-}
-
-/* =========================
-   MESSAGE
-========================= */
-
-.message {
-    margin-top: 15px;
-    padding: 13px;
-    border-radius: 9px;
-    text-align: center;
-    font-weight: bold;
-    line-height: 1.4;
-}
-
-.message.before {
-    background: rgba(77,163,255,0.15);
-    color: var(--blue);
-}
-
-.message.after {
-    background: rgba(240,162,2,0.15);
-    color: var(--accent);
-}
-
-.message.win {
-    background: rgba(76,175,80,0.15);
-    color: var(--green);
-}
-
-.message.error {
-    background: rgba(239,83,80,0.12);
-    color: var(--red);
-}
-
-/* =========================
-   JAUGE
-========================= */
-
-.progress-title {
-    color: var(--muted);
-    font-size: 0.85rem;
-    text-align: center;
-    margin-bottom: 7px;
-}
-
-.progress {
-    height: 13px;
-    background: #0d1117;
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    width: 0%;
-    background: var(--accent);
-    transition: width 0.3s ease;
-}
-
-/* =========================
-   HISTORIQUE
-========================= */
-
-.history-title {
-    margin: 0 0 10px;
-    font-size: 1rem;
-}
-
-.history {
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.history-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 9px 10px;
-    background: rgba(255,255,255,0.04);
-    border-radius: 7px;
-    font-size: 0.9rem;
-}
-
-.history-word {
-    font-weight: bold;
-    overflow-wrap: anywhere;
-}
-
-.history-result {
-    font-weight: bold;
-    flex-shrink: 0;
-}
-
-.history-result.before {
-    color: var(--blue);
-}
-
-.history-result.after {
-    color: var(--accent);
-}
-
-.history-result.win {
-    color: var(--green);
-}
-
-/* =========================
-   RESULTAT
-========================= */
-
-.final-result {
-    text-align: center;
-}
-
-.final-result .big {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 5px 0;
-}
-
-.final-result .small {
-    color: var(--muted);
-}
-
-/* =========================
-   CLASSEMENT
-========================= */
-
-.section-title {
-    font-size: 1rem;
-    color: var(--muted);
-    margin: 0 0 12px;
-}
-
-.board-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 9px 4px;
-    border-bottom: 1px solid rgba(255,255,255,0.07);
-}
-
-.board-row:last-child {
-    border-bottom: none;
-}
-
-.rank {
-    width: 30px;
-    color: var(--muted);
-    flex-shrink: 0;
-}
-
-.player-name {
-    flex: 1;
-    overflow-wrap: anywhere;
-}
-
-.player-points {
-    color: var(--accent);
-    font-weight: bold;
-}
-
-.you {
-    color: var(--accent);
-    font-size: 0.7rem;
-    border: 1px solid var(--accent);
-    border-radius: 4px;
-    padding: 2px 5px;
-    margin-left: 4px;
-}
-
-/* =========================
-   FOOTER
-========================= */
-
-.footer {
-    text-align: center;
-    color: var(--muted);
-    font-size: 0.8rem;
-    margin-top: 12px;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-.error {
-    color: var(--red);
-    text-align: center;
-    margin-top: 10px;
-}
-
-/* =========================
-   MOBILE
-========================= */
-
-@media (max-width: 380px) {
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>DicoTus</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
     body {
-        padding-left: 8px;
-        padding-right: 8px;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f5f7;
+      color: #222;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      margin: 0 auto;
+      padding: 20px 15px 40px;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 5px 0 5px;
+      font-size: 38px;
+      color: #222;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 25px;
     }
 
     .card {
-        padding: 14px;
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
     }
 
-    .guess-button {
-        width: 90px;
+    .hidden {
+      display: none !important;
     }
 
-    .range-word {
-        padding: 6px 8px;
-        font-size: 0.85rem;
+    /* PSEUDO */
+
+    #pseudoSection {
+      text-align: center;
     }
-}
-</style>
+
+    #pseudoInput {
+      width: 100%;
+      max-width: 350px;
+      padding: 14px;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 18px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 13px 20px;
+      font-size: 17px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #222;
+      color: white;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* INFOS DU JEU */
+
+    .game-title {
+      text-align: center;
+      font-size: 25px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .date {
+      text-align: center;
+      color: #777;
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+
+    .word-length {
+      text-align: center;
+      font-size: 21px;
+      font-weight: bold;
+      margin: 15px 0 22px;
+    }
+
+    .word-length span {
+      color: #1976d2;
+    }
+
+    /* ALPHABET */
+
+    .alphabet-title {
+      text-align: center;
+      font-size: 15px;
+      color: #777;
+      margin-bottom: 10px;
+    }
+
+    .alphabet {
+      display: grid;
+      grid-template-columns: repeat(13, 1fr);
+      gap: 5px;
+      margin-bottom: 20px;
+    }
+
+    .letter {
+      height: 38px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 7px;
+      background: #e8edf2;
+      font-weight: bold;
+      font-size: 15px;
+      transition: 0.2s;
+    }
+
+    .letter.possible {
+      background: #1976d2;
+      color: white;
+    }
+
+    .letter.boundary {
+      background: #43a047;
+      color: white;
+      transform: scale(1.05);
+    }
+
+    .letter.impossible {
+      opacity: 0.22;
+    }
+
+    /* INDICATION AVANT / APRES */
+
+    #message {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border-radius: 10px;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 15px 0;
+      padding: 10px;
+    }
+
+    .message-info {
+      background: #eef3f8;
+      color: #444;
+    }
+
+    .message-before {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .message-after {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .message-success {
+      background: #d9f7df;
+      color: #176b2c;
+    }
+
+    .message-error {
+      background: #fde2e2;
+      color: #a12222;
+    }
+
+    /* SAISIE */
+
+    .input-label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    .guess-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    #guessInput {
+      flex: 1;
+      min-width: 0;
+      padding: 14px;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      text-transform: uppercase;
+      outline: none;
+    }
+
+    #guessInput:focus {
+      border-color: #1976d2;
+    }
+
+    #guessButton {
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+
+    .attempts {
+      text-align: center;
+      margin-top: 12px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    /* HISTORIQUE */
+
+    .history-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    #history {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 12px;
+      border-radius: 8px;
+      background: #f1f3f5;
+      font-weight: bold;
+    }
+
+    .history-word {
+      letter-spacing: 1px;
+    }
+
+    .history-direction {
+      font-size: 13px;
+    }
+
+    .direction-before {
+      color: #856404;
+    }
+
+    .direction-after {
+      color: #1e40af;
+    }
+
+    .direction-success {
+      color: #176b2c;
+    }
+
+    /* RESULTAT */
+
+    #result {
+      text-align: center;
+    }
+
+    .result-title {
+      font-size: 26px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .result-word {
+      font-size: 30px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      margin: 15px 0;
+    }
+
+    .result-points {
+      font-size: 20px;
+      font-weight: bold;
+      color: #1976d2;
+    }
+
+    /* CLASSEMENT */
+
+    .leaderboard-title {
+      text-align: center;
+      font-size: 23px;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 45px 1fr 70px;
+      align-items: center;
+      padding: 10px 5px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .leaderboard-row:last-child {
+      border-bottom: none;
+    }
+
+    .rank {
+      font-weight: bold;
+      color: #777;
+    }
+
+    .player {
+      font-weight: bold;
+    }
+
+    .points {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .loading {
+      text-align: center;
+      color: #777;
+      padding: 15px;
+    }
+
+    .small-note {
+      text-align: center;
+      color: #888;
+      font-size: 12px;
+      margin-top: 15px;
+    }
+
+    @media (max-width: 480px) {
+
+      .container {
+        padding: 12px 10px 30px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .card {
+        padding: 15px;
+      }
+
+      .alphabet {
+        gap: 3px;
+      }
+
+      .letter {
+        height: 34px;
+        font-size: 13px;
+      }
+
+      .guess-row {
+        flex-direction: column;
+      }
+
+      #guessButton {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 
 <body>
 
 <div class="container">
 
-    <h1>🔎 DICO</h1>
-    <div class="subtitle">Trouve le mot mystère</div>
+  <h1>DICO</h1>
+  <div class="subtitle">Trouve le mot mystère</div>
+
+  <!-- ========================= -->
+  <!-- PSEUDO -->
+  <!-- ========================= -->
+
+  <div id="pseudoSection" class="card">
+
+    <h2>Bienvenue !</h2>
+
+    <p>Choisis simplement un pseudo pour jouer.</p>
+
+    <input
+      type="text"
+      id="pseudoInput"
+      maxlength="20"
+      placeholder="Ton pseudo"
+      autocomplete="off"
+    >
+
+    <br>
+
+    <button id="startButton">
+      Jouer
+    </button>
+
+  </div>
 
 
-    <!-- =========================
-         PSEUDO
-    ========================== -->
+  <!-- ========================= -->
+  <!-- JEU -->
+  <!-- ========================= -->
 
-    <div id="pseudo-section" class="card">
+  <div id="gameSection" class="hidden">
 
-        <label for="pseudo">Ton pseudo</label>
+    <div class="card">
+
+      <div class="game-title">
+        Le mot du jour
+      </div>
+
+      <div class="date" id="todayDate"></div>
+
+      <div class="word-length">
+        Mot mystère : <span id="wordLength"></span> lettres
+      </div>
+
+
+      <!-- ALPHABET -->
+
+      <div class="alphabet-title">
+        Les lettres encore possibles
+      </div>
+
+      <div id="alphabet" class="alphabet"></div>
+
+
+      <!-- MESSAGE -->
+
+      <div id="message" class="message-info">
+        Propose un mot !
+      </div>
+
+
+      <!-- SAISIE -->
+
+      <label class="input-label" for="guessInput">
+        Proposer un mot
+      </label>
+
+      <div class="guess-row">
 
         <input
-            type="text"
-            id="pseudo"
-            maxlength="24"
-            placeholder="Ex : Ludivine"
-            autocomplete="off"
+          type="text"
+          id="guessInput"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          placeholder="VOTRE MOT"
         >
 
-        <button
-            class="main-button"
-            id="play-button"
-        >
-            Jouer
+        <button id="guessButton">
+          Valider
         </button>
 
-        <div
-            id="pseudo-error"
-            class="error hidden"
-        >
-            Entre un pseudo pour commencer.
-        </div>
+      </div>
+
+      <div class="attempts">
+        Tentatives : <span id="attemptCount">0</span>
+      </div>
 
     </div>
 
 
-    <!-- =========================
-         JEU
-    ========================== -->
+    <!-- ========================= -->
+    <!-- HISTORIQUE -->
+    <!-- ========================= -->
 
-    <div id="game-section" class="hidden">
+    <div class="card">
 
-        <div class="card">
+      <div class="history-title">
+        Tes propositions
+      </div>
 
-            <div class="info-line">
-
-                <span>
-                    📅 <strong id="date-label">-</strong>
-                </span>
-
-                <span>
-                    🔢 <strong id="attempts-label">0</strong> essai
-                </span>
-
-            </div>
-
-            <div class="search-title">
-                Le mot mystère est compris entre
-            </div>
-
-
-            <div class="current-range">
-
-                <span
-                    id="lower-word"
-                    class="range-word"
-                >
-                    A
-                </span>
-
-                <span class="range-arrow">
-                    →
-                </span>
-
-                <span
-                    id="upper-word"
-                    class="range-word"
-                >
-                    Z
-                </span>
-
-            </div>
-
-
-            <div class="guess-row">
-
-                <input
-                    type="text"
-                    id="guess-input"
-                    placeholder="Propose un mot"
-                    autocomplete="off"
-                    autocapitalize="characters"
-                    spellcheck="false"
-                >
-
-                <button
-                    id="guess-button"
-                    class="guess-button"
-                >
-                    VALIDER
-                </button>
-
-            </div>
-
-
-            <div
-                id="message"
-                class="message hidden"
-            ></div>
-
-
-            <div style="margin-top:18px">
-
-                <div class="progress-title">
-                    Zone de recherche
-                </div>
-
-                <div class="progress">
-
-                    <div
-                        id="progress-bar"
-                        class="progress-bar"
-                    ></div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- HISTORIQUE -->
-
-        <div class="card">
-
-            <h2 class="history-title">
-                📜 Tes propositions
-            </h2>
-
-            <div
-                id="history"
-                class="history"
-            ></div>
-
-            <div
-                id="history-empty"
-                style="
-                    text-align:center;
-                    color:var(--muted);
-                    padding:8px;
-                "
-            >
-                Aucune proposition pour le moment.
-            </div>
-
-        </div>
-
-
-        <!-- RESULTAT -->
-
-        <div
-            id="result-card"
-            class="card hidden"
-        >
-
-            <div class="final-result">
-
-                <div id="result-big" class="big"></div>
-
-                <div
-                    id="result-small"
-                    class="small"
-                ></div>
-
-            </div>
-
-        </div>
-
-
-        <!-- CLASSEMENT -->
-
-        <div class="card">
-
-            <h2 class="section-title">
-                🏆 Classement
-            </h2>
-
-            <div id="leaderboard"></div>
-
-            <div
-                id="leaderboard-empty"
-                style="
-                    text-align:center;
-                    color:var(--muted);
-                    padding:10px;
-                "
-            >
-                Aucun résultat pour le moment.
-            </div>
-
-        </div>
-
-
-        <div
-            id="change-pseudo"
-            class="footer"
-        >
-            Changer de pseudo
-        </div>
+      <div id="history"></div>
 
     </div>
+
+
+    <!-- ========================= -->
+    <!-- RESULTAT -->
+    <!-- ========================= -->
+
+    <div id="result" class="card hidden">
+
+      <div class="result-title" id="resultTitle"></div>
+
+      <div>
+        Le mot était :
+      </div>
+
+      <div class="result-word" id="resultWord"></div>
+
+      <div class="result-points" id="resultPoints"></div>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- CLASSEMENT -->
+    <!-- ========================= -->
+
+    <div class="card">
+
+      <div class="leaderboard-title">
+        🏆 Classement
+      </div>
+
+      <div id="leaderboard">
+        <div class="loading">
+          Chargement...
+        </div>
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
 
 
-<!-- =====================================================
-     FIREBASE
-===================================================== -->
-
 <script type="module">
 
-import {
-    initializeApp
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+  /* ============================================================
+     FIREBASE
+     ============================================================ */
 
-import {
+  import {
+    initializeApp
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+  import {
     getFirestore,
     doc,
     getDoc,
     setDoc,
-    serverTimestamp,
-    increment,
-    writeBatch,
+    updateDoc,
     collection,
     query,
     orderBy,
     limit,
-    onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+    getDocs,
+    increment
+  } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
-/* =====================================================
-   CONFIGURATION FIREBASE
-===================================================== */
-
-const firebaseConfig = {
+  const firebaseConfig = {
 
     apiKey: "AIzaSyAPOWsMjLLVOwboJuvcxdYrCTwh2yT9mJM",
 
-    authDomain:
-        "dicotus-adbec.firebaseapp.com",
+    authDomain: "dicotus-adbec.firebaseapp.com",
 
-    projectId:
-        "dicotus-adbec",
+    projectId: "dicotus-adbec",
 
-    storageBucket:
-        "dicotus-adbec.firebasestorage.app",
+    storageBucket: "dicotus-adbec.firebasestorage.app",
 
-    messagingSenderId:
-        "399883509375",
+    messagingSenderId: "399883509375",
 
-    appId:
-        "1:399883509375:web:2765aaf0f2e176a85d694a",
+    appId: "1:399883509375:web:2765aaf0f2e176a85d694a",
 
-    measurementId:
-        "G-1MGRJZ03HN"
-};
+    measurementId: "G-1MGRJZ03HN"
+
+  };
 
 
-const app = initializeApp(firebaseConfig);
+  const app = initializeApp(firebaseConfig);
 
-const db = getFirestore(app);
-
-
-/* =====================================================
-   PARAMETRES
-===================================================== */
-
-/*
-    Fichier contenant les mots qui peuvent être choisis
-    comme mot secret.
-*/
-const WORD_OF_DAY_FILE = "mots_du_jour.json";
+  const db = getFirestore(app);
 
 
-/*
-    Fichier contenant les mots que le joueur peut proposer.
-*/
-const ACCEPTED_WORDS_FILE = "mots_acceptes.json";
+  /* ============================================================
+     CONFIGURATION
+     ============================================================ */
+
+  const START_DATE = "2026-09-23";
+
+  const MAX_ATTEMPTS = 20;
+
+  const RESULTS_COLLECTION = "dicoResults";
+
+  const PLAYERS_COLLECTION = "players";
 
 
-/*
-    Date de départ du calendrier des mots.
+  /* ============================================================
+     VARIABLES
+     ============================================================ */
 
-    Le mot change chaque jour.
-*/
-const START_DATE = "2026-09-23";
+  let secretWords = [];
 
+  let acceptedWords = new Set();
 
-/*
-    Nombre maximum d'essais.
+  let secretWord = "";
 
-    Pour une vraie dichotomie, 20 est confortable.
-*/
-const MAX_ATTEMPTS = 20;
+  let wordLength = 0;
 
+  let pseudo = "";
 
-/* =====================================================
-   VARIABLES
-===================================================== */
+  let attempts = 0;
 
-let secretWords = [];
+  let guesses = [];
 
-let acceptedWords = new Set();
+  let lowerBound = null;
 
-let secretWord = "";
+  let upperBound = null;
 
-let currentPseudo = "";
-
-let todayStr = "";
-
-let guesses = [];
-
-let gameOver = false;
-
-let lowerBound = "";
-
-let upperBound = "";
-
-let saveInProgress = false;
+  let gameFinished = false;
 
 
-/* =====================================================
-   ELEMENTS HTML
-===================================================== */
+  /* ============================================================
+     ELEMENTS HTML
+     ============================================================ */
 
-const pseudoSection =
-    document.getElementById("pseudo-section");
+  const pseudoSection =
+    document.getElementById("pseudoSection");
 
-const gameSection =
-    document.getElementById("game-section");
+  const gameSection =
+    document.getElementById("gameSection");
 
-const pseudoInput =
-    document.getElementById("pseudo");
+  const pseudoInput =
+    document.getElementById("pseudoInput");
 
-const pseudoError =
-    document.getElementById("pseudo-error");
+  const startButton =
+    document.getElementById("startButton");
 
-const playButton =
-    document.getElementById("play-button");
+  const guessInput =
+    document.getElementById("guessInput");
 
-const guessInput =
-    document.getElementById("guess-input");
+  const guessButton =
+    document.getElementById("guessButton");
 
-const guessButton =
-    document.getElementById("guess-button");
-
-const message =
+  const message =
     document.getElementById("message");
 
-const history =
+  const alphabet =
+    document.getElementById("alphabet");
+
+  const history =
     document.getElementById("history");
 
-const historyEmpty =
-    document.getElementById("history-empty");
+  const attemptCount =
+    document.getElementById("attemptCount");
 
-const lowerWord =
-    document.getElementById("lower-word");
+  const wordLengthElement =
+    document.getElementById("wordLength");
 
-const upperWord =
-    document.getElementById("upper-word");
+  const todayDate =
+    document.getElementById("todayDate");
 
-const attemptsLabel =
-    document.getElementById("attempts-label");
+  const result =
+    document.getElementById("result");
 
-const dateLabel =
-    document.getElementById("date-label");
+  const resultTitle =
+    document.getElementById("resultTitle");
 
-const progressBar =
-    document.getElementById("progress-bar");
+  const resultWord =
+    document.getElementById("resultWord");
 
-const resultCard =
-    document.getElementById("result-card");
+  const resultPoints =
+    document.getElementById("resultPoints");
 
-const resultBig =
-    document.getElementById("result-big");
-
-const resultSmall =
-    document.getElementById("result-small");
-
-const leaderboard =
+  const leaderboard =
     document.getElementById("leaderboard");
 
-const leaderboardEmpty =
-    document.getElementById("leaderboard-empty");
 
-const changePseudo =
-    document.getElementById("change-pseudo");
+  /* ============================================================
+     NORMALISATION
+     ============================================================ */
 
-
-/* =====================================================
-   NORMALISATION DES MOTS
-===================================================== */
-
-/*
-    On utilise une normalisation pour que :
-
-    é -> e
-    è -> e
-    ê -> e
-
-    et que les majuscules/minuscules ne changent
-    pas l'ordre alphabétique.
-*/
-
-function normalizeWord(word) {
+  function normalizeWord(word) {
 
     return String(word)
-        .trim()
-        .toUpperCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^A-Z]/g, "");
-}
+      .trim()
+      .toUpperCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^A-Z]/g, "");
+
+  }
 
 
-/* =====================================================
-   COMPARAISON ALPHABETIQUE
-===================================================== */
+  /* ============================================================
+     COMPARAISON ALPHABETIQUE
+     ============================================================ */
 
-function compareWords(a, b) {
+  function compareWords(a, b) {
 
-    const aa = normalizeWord(a);
-    const bb = normalizeWord(b);
-
-    return aa.localeCompare(
-        bb,
-        "fr",
-        {
-            sensitivity: "base"
-        }
+    return a.localeCompare(
+      b,
+      "fr",
+      {
+        sensitivity: "base"
+      }
     );
-}
+
+  }
 
 
-/* =====================================================
-   DATE
-===================================================== */
+  /* ============================================================
+     EXTRACTION DES MOTS D'UN JSON
+     ============================================================ */
 
-function getLocalDateStr(date = new Date()) {
+  function extractWords(data) {
 
-    const y =
-        date.getFullYear();
+    let words = [];
 
-    const m =
-        String(date.getMonth() + 1)
-        .padStart(2, "0");
+    if (Array.isArray(data)) {
 
-    const d =
-        String(date.getDate())
-        .padStart(2, "0");
+      words = data;
 
-    return `${y}-${m}-${d}`;
-}
+    } else if (data && Array.isArray(data.words)) {
 
+      words = data.words;
 
-/* =====================================================
-   NUMERO DU JOUR
-===================================================== */
+    } else if (data && Array.isArray(data.mots)) {
 
-function daysSinceStart() {
+      words = data.mots;
 
-    const start =
-        new Date(
-            START_DATE + "T00:00:00"
-        );
+    } else if (data && Array.isArray(data.wordsOfTheDay)) {
 
-    const now =
-        new Date();
+      words = data.wordsOfTheDay;
 
-    const startMid =
-        new Date(
-            start.getFullYear(),
-            start.getMonth(),
-            start.getDate()
-        );
-
-    const nowMid =
-        new Date(
-            now.getFullYear(),
-            now.getMonth(),
-            now.getDate()
-        );
-
-    return Math.floor(
-        (nowMid - startMid) /
-        86400000
-    );
-}
-
-
-/* =====================================================
-   CHOIX DU MOT DU JOUR
-===================================================== */
-
-function getTodayWord() {
-
-    if (!secretWords.length) {
-        throw new Error(
-            "Aucun mot secret disponible."
-        );
     }
 
-    const index =
-        ((daysSinceStart() %
-            secretWords.length)
-            + secretWords.length)
-        % secretWords.length;
+    return words
+      .map(normalizeWord)
+      .filter(word => word.length > 0);
 
-    return secretWords[index];
-}
+  }
 
 
-/* =====================================================
-   CHARGEMENT MOTS SECRETS
-===================================================== */
+  /* ============================================================
+     CHARGEMENT MOTS DU JOUR
+     ============================================================ */
 
-async function loadSecretWords() {
+  async function loadSecretWords() {
 
     const response =
-        await fetch(
-            WORD_OF_DAY_FILE,
-            {
-                cache: "no-store"
-            }
-        );
+      await fetch("mots_du_jour.json", {
+        cache: "no-cache"
+      });
 
     if (!response.ok) {
 
-        throw new Error(
-            `Impossible de charger ${WORD_OF_DAY_FILE}`
-        );
+      throw new Error(
+        "Impossible de charger mot_du_jour.json"
+      );
+
     }
 
     const data =
-        await response.json();
+      await response.json();
 
     secretWords =
-        data
-            .map(word => normalizeWord(word))
-            .filter(word =>
-                /^[A-Z]+$/.test(word)
-            );
+      extractWords(data);
 
-    /*
-        Suppression des doublons.
-    */
-    secretWords =
-        [...new Set(secretWords)];
+    if (secretWords.length === 0) {
 
-    if (!secretWords.length) {
+      throw new Error(
+        "mots_du_jour.json ne contient aucun mot."
+      );
 
-        throw new Error(
-            "Le fichier mot_du_jour.json ne contient aucun mot valide."
-        );
     }
-}
+
+  }
 
 
-/* =====================================================
-   CHARGEMENT MOTS ACCEPTES
-===================================================== */
+  /* ============================================================
+     CHARGEMENT MOTS ACCEPTES
+     ============================================================ */
 
-async function loadAcceptedWords() {
+  async function loadAcceptedWords() {
 
     const response =
-        await fetch(
-            ACCEPTED_WORDS_FILE,
-            {
-                cache: "no-store"
-            }
-        );
+      await fetch("mots_acceptes.json", {
+        cache: "no-cache"
+      });
 
     if (!response.ok) {
 
-        throw new Error(
-            `Impossible de charger ${ACCEPTED_WORDS_FILE}`
-        );
+      throw new Error(
+        "Impossible de charger mot_acceptes.json"
+      );
+
     }
 
     const data =
-        await response.json();
+      await response.json();
+
+    const words =
+      extractWords(data);
 
     acceptedWords =
-        new Set(
-            data
-                .map(word =>
-                    normalizeWord(word)
-                )
-                .filter(word =>
-                    /^[A-Z]+$/.test(word)
-                )
-        );
+      new Set(words);
 
 
     /*
-        Le mot secret doit toujours
-        être accepté comme proposition.
+       Les mots du jour sont également considérés
+       comme des mots valides.
     */
-    secretWords.forEach(word => {
-        acceptedWords.add(word);
-    });
 
+    for (const word of secretWords) {
 
-    if (!acceptedWords.size) {
+      acceptedWords.add(word);
 
-        throw new Error(
-            "Le fichier mot_acceptes.json ne contient aucun mot valide."
-        );
     }
-}
+
+  }
 
 
-/* =====================================================
-   ID FIREBASE DU PSEUDO
-===================================================== */
+  /* ============================================================
+     CALCUL DU MOT DU JOUR
+     ============================================================ */
 
-function pseudoDocId(pseudo) {
+  function getTodayWord() {
 
-    return pseudo
-        .trim()
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9_-]/g, "-")
-        .slice(0, 40)
-        || "joueur";
-}
+    const today =
+      new Date();
+
+    const start =
+      new Date(START_DATE + "T00:00:00");
+
+    const todayUTC =
+      Date.UTC(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+
+    const startUTC =
+      Date.UTC(
+        start.getFullYear(),
+        start.getMonth(),
+        start.getDate()
+      );
+
+    const diff =
+      Math.floor(
+        (todayUTC - startUTC)
+        /
+        (1000 * 60 * 60 * 24)
+      );
+
+    const index =
+      ((diff % secretWords.length)
+      + secretWords.length)
+      % secretWords.length;
+
+    return secretWords[index];
+
+  }
 
 
-/* =====================================================
-   SECURITE HTML
-===================================================== */
+  /* ============================================================
+     ID DU JOUEUR
+     ============================================================ */
 
-function escapeHtml(str) {
+  function getPseudoId() {
 
-    const div =
+    return normalizeWord(pseudo)
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "_");
+
+  }
+
+
+  /* ============================================================
+     ID DE LA PARTIE
+     ============================================================ */
+
+  function getGameId() {
+
+    const today =
+      getDateString();
+
+    return today + "_" + getPseudoId();
+
+  }
+
+
+  /* ============================================================
+     DATE DU JOUR
+     ============================================================ */
+
+  function getDateString() {
+
+    const now =
+      new Date();
+
+    const year =
+      now.getFullYear();
+
+    const month =
+      String(now.getMonth() + 1)
+        .padStart(2, "0");
+
+    const day =
+      String(now.getDate())
+        .padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+
+  }
+
+
+  /* ============================================================
+     AFFICHAGE DATE
+     ============================================================ */
+
+  function displayDate() {
+
+    const date =
+      new Date();
+
+    todayDate.textContent =
+      date.toLocaleDateString(
+        "fr-FR",
+        {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric"
+        }
+      );
+
+  }
+
+
+  /* ============================================================
+     ALPHABET
+     ============================================================ */
+
+  function renderAlphabet() {
+
+    alphabet.innerHTML = "";
+
+    const letters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    let minLetter = "A";
+
+    let maxLetter = "Z";
+
+
+    /*
+       Si une borne inférieure existe,
+       la première lettre minimale devient
+       celle de cette borne.
+    */
+
+    if (lowerBound) {
+
+      minLetter =
+        normalizeWord(lowerBound)[0];
+
+    }
+
+
+    /*
+       Même chose pour la borne supérieure.
+    */
+
+    if (upperBound) {
+
+      maxLetter =
+        normalizeWord(upperBound)[0];
+
+    }
+
+
+    const minIndex =
+      letters.indexOf(minLetter);
+
+    const maxIndex =
+      letters.indexOf(maxLetter);
+
+
+    letters.forEach((letter, index) => {
+
+      const element =
         document.createElement("div");
 
-    div.textContent = str;
+      element.className =
+        "letter";
 
-    return div.innerHTML;
-}
+      element.textContent =
+        letter;
 
 
-/* =====================================================
-   MESSAGE
-===================================================== */
+      if (
+        index >= minIndex &&
+        index <= maxIndex
+      ) {
 
-function showMessage(text, type) {
+        element.classList.add("possible");
 
-    message.textContent = text;
+      } else {
 
-    message.className =
-        "message " + type;
+        element.classList.add("impossible");
 
-    message.classList.remove("hidden");
-}
+      }
 
 
-function hideMessage() {
+      /*
+         Les lettres correspondant aux bornes
+         sont légèrement mises en évidence.
+      */
 
-    message.classList.add("hidden");
-}
+      if (
+        letter === minLetter ||
+        letter === maxLetter
+      ) {
 
+        element.classList.add("boundary");
 
-/* =====================================================
-   INITIALISATION DU JEU
-===================================================== */
+      }
 
-async function initGame() {
 
-    try {
+      alphabet.appendChild(element);
 
-        playButton.disabled = true;
+    });
 
-        /*
-            Chargement des deux fichiers.
-        */
-        if (!secretWords.length) {
-            await loadSecretWords();
-        }
+  }
 
-        if (!acceptedWords.size) {
-            await loadAcceptedWords();
-        }
 
+  /* ============================================================
+     MESSAGE
+     ============================================================ */
 
-        /*
-            Mot secret du jour.
-        */
-        secretWord =
-            getTodayWord();
+  function setMessage(
+    text,
+    type = "info"
+  ) {
 
+    message.textContent =
+      text;
 
-        todayStr =
-            getLocalDateStr();
+    message.className = "";
 
+    message.id = "message";
 
-        /*
-            Bornes initiales.
+    message.classList.add(
+      "message-" + type
+    );
 
-            On utilise des bornes virtuelles plutôt
-            que des mots réels.
-        */
-        lowerBound = "";
+  }
 
-        upperBound = "";
 
+  /* ============================================================
+     HISTORIQUE
+     ============================================================ */
 
-        guesses = [];
-
-        gameOver = false;
-
-
-        /*
-            Date affichée.
-        */
-        dateLabel.textContent =
-            new Date()
-                .toLocaleDateString(
-                    "fr-FR",
-                    {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long"
-                    }
-                );
-
-
-        /*
-            Vérification d'une partie déjà enregistrée.
-        */
-        const resultRef =
-            doc(
-                db,
-                "dicoResults",
-                `${todayStr}_${pseudoDocId(currentPseudo)}`
-            );
-
-
-        const resultSnap =
-            await getDoc(resultRef);
-
-
-        if (resultSnap.exists()) {
-
-            const data =
-                resultSnap.data();
-
-
-            guesses =
-                data.guesses || [];
-
-
-            if (data.finished) {
-
-                gameOver = true;
-
-                reconstructBounds();
-
-                renderHistory();
-
-                updateDisplay();
-
-                showFinalResult(
-                    data.solved,
-                    data.attempts,
-                    data.points
-                );
-
-            } else {
-
-                /*
-                    Partie commencée mais non terminée.
-                */
-                reconstructBounds();
-
-                renderHistory();
-
-                updateDisplay();
-
-                guessInput.focus();
-            }
-
-        } else {
-
-            renderHistory();
-
-            updateDisplay();
-
-            guessInput.focus();
-        }
-
-
-        startLeaderboard();
-
-        playButton.disabled = false;
-
-    } catch (error) {
-
-        console.error(error);
-
-        showMessage(
-            "Erreur : " + error.message,
-            "error"
-        );
-
-        playButton.disabled = false;
-    }
-}
-
-
-/* =====================================================
-   RECONSTRUIRE LES BORNES
-===================================================== */
-
-function reconstructBounds() {
-
-    lowerBound = "";
-
-    upperBound = "";
-
-
-    for (const guess of guesses) {
-
-        const result =
-            compareWords(
-                guess,
-                secretWord
-            );
-
-
-        if (result < 0) {
-
-            lowerBound = guess;
-
-        } else if (result > 0) {
-
-            upperBound = guess;
-
-        } else {
-
-            lowerBound = guess;
-            upperBound = guess;
-        }
-    }
-}
-
-
-/* =====================================================
-   AFFICHAGE DES BORNES
-===================================================== */
-
-function updateDisplay() {
-
-    lowerWord.textContent =
-        lowerBound || "A";
-
-    upperWord.textContent =
-        upperBound || "Z";
-
-
-    attemptsLabel.textContent =
-        guesses.length;
-
-
-    /*
-        Estimation visuelle de la progression.
-
-        Plus on fait d'essais, plus la barre avance.
-    */
-    const progress =
-        Math.min(
-            100,
-            (guesses.length /
-                MAX_ATTEMPTS) * 100
-        );
-
-    progressBar.style.width =
-        progress + "%";
-}
-
-
-/* =====================================================
-   HISTORIQUE
-===================================================== */
-
-function renderHistory() {
+  function renderHistory() {
 
     history.innerHTML = "";
 
+    guesses.forEach(item => {
 
-    if (!guesses.length) {
+      const row =
+        document.createElement("div");
 
-        historyEmpty.style.display =
-            "block";
-
-        return;
-    }
-
-
-    historyEmpty.style.display =
-        "none";
+      row.className =
+        "history-item";
 
 
-    guesses.forEach(
-        (guess) => {
+      const word =
+        document.createElement("span");
 
-            const row =
-                document.createElement("div");
+      word.className =
+        "history-word";
 
-            row.className =
-                "history-row";
-
-
-            const word =
-                document.createElement("span");
-
-            word.className =
-                "history-word";
-
-            word.textContent =
-                guess;
+      word.textContent =
+        item.word;
 
 
-            const result =
-                document.createElement("span");
+      const direction =
+        document.createElement("span");
 
-            result.className =
-                "history-result";
-
-
-            const comparison =
-                compareWords(
-                    guess,
-                    secretWord
-                );
+      direction.className =
+        "history-direction";
 
 
-            if (comparison < 0) {
+      if (item.result === "before") {
 
-                result.textContent =
-                    "APRÈS →";
+        direction.textContent =
+          "AVANT";
 
-                result.classList.add(
-                    "after"
-                );
+        direction.classList.add(
+          "direction-before"
+        );
 
-            } else if (comparison > 0) {
+      } else if (item.result === "after") {
 
-                result.textContent =
-                    "← AVANT";
+        direction.textContent =
+          "APRÈS";
 
-                result.classList.add(
-                    "before"
-                );
+        direction.classList.add(
+          "direction-after"
+        );
 
-            } else {
+      } else {
 
-                result.textContent =
-                    "🎉 TROUVÉ";
+        direction.textContent =
+          "✓ TROUVÉ";
 
-                result.classList.add(
-                    "win"
-                );
-            }
+        direction.classList.add(
+          "direction-success"
+        );
+
+      }
 
 
-            row.appendChild(word);
+      row.appendChild(word);
 
-            row.appendChild(result);
+      row.appendChild(direction);
 
-            history.appendChild(row);
-        }
+      history.appendChild(row);
+
+    });
+
+  }
+
+
+  /* ============================================================
+     SCORE
+     ============================================================ */
+
+  function calculatePoints() {
+
+    /*
+       Plus le mot est trouvé rapidement,
+       plus le score est important.
+    */
+
+    return Math.max(
+      1,
+      MAX_ATTEMPTS + 1 - attempts
     );
-}
+
+  }
 
 
-/* =====================================================
-   VALIDATION D'UN MOT
-===================================================== */
+  /* ============================================================
+     SAUVEGARDE PARTIE
+     ============================================================ */
 
-async function submitGuess() {
+  async function saveGame() {
 
-    if (gameOver) {
-        return;
-    }
-
-
-    const raw =
-        guessInput.value.trim();
-
-
-    const guess =
-        normalizeWord(raw);
+    const gameRef =
+      doc(
+        db,
+        RESULTS_COLLECTION,
+        getGameId()
+      );
 
 
-    hideMessage();
+    await setDoc(
+      gameRef,
+      {
+        pseudo: pseudo,
+        date: getDateString(),
+        wordLength: wordLength,
+        attempts: attempts,
+        guesses: guesses,
+        lowerBound: lowerBound,
+        upperBound: upperBound,
+        finished: gameFinished,
+        won:
+          guesses.some(
+            item => item.result === "correct"
+          ),
+        updatedAt: Date.now()
+      },
+      {
+        merge: true
+      }
+    );
+
+  }
 
 
-    /*
-        Aucun mot.
-    */
-    if (!guess) {
+  /* ============================================================
+     CHARGEMENT PARTIE EXISTANTE
+     ============================================================ */
 
-        showMessage(
-            `"Entre un mot.`,
-            "error"
-        );
+  async function loadSavedGame() {
 
-        return;
-    }
+    const gameRef =
+      doc(
+        db,
+        RESULTS_COLLECTION,
+        getGameId()
+      );
 
-
-    /*
-        Mot inexistant dans le dictionnaire.
-    */
-    if (!acceptedWords.has(guess)) {
-
-        showMessage(
-            `"${raw}" n'est pas dans le dictionnaire.`,
-            "error"
-        );
-
-        return;
-    }
+    const snapshot =
+      await getDoc(gameRef);
 
 
-    /*
-        Eviter de proposer deux fois
-        le même mot.
-    */
-    if (guesses.includes(guess)) {
+    if (!snapshot.exists()) {
 
-        showMessage(
-            "Tu as déjà proposé ce mot.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    /*
-        Vérification des limites.
-
-        Si on sait déjà que le mot secret
-        est après A et avant Z, une proposition
-        en dehors de cette zone n'a aucun sens.
-    */
-    if (
-        lowerBound &&
-        compareWords(guess, lowerBound) <= 0
-    ) {
-
-        showMessage(
-            `Ton mot doit être après "${lowerBound}".`,
-            "error"
-        );
-
-        return;
-    }
-
-
-    if (
-        upperBound &&
-        compareWords(guess, upperBound) >= 0
-    ) {
-
-        showMessage(
-            `Ton mot doit être avant "${upperBound}".`,
-            "error"
-        );
-
-        return;
-    }
-
-
-    /*
-        Ajout à l'historique.
-    */
-    guesses.push(guess);
-
-
-    const comparison =
-        compareWords(
-            guess,
-            secretWord
-        );
-
-
-    /*
-        MOT TROUVE
-    */
-    if (comparison === 0) {
-
-        gameOver = true;
-
-        lowerBound = guess;
-
-        upperBound = guess;
-
-        renderHistory();
-
-        updateDisplay();
-
-        guessInput.value = "";
-
-        await finishGame(
-            true,
-            guesses.length
-        );
-
-        return;
-    }
-
-
-    /*
-        MOT AVANT LE SECRET
-    */
-    if (comparison < 0) {
-
-        lowerBound = guess;
-
-        showMessage(
-            "Le mot mystère est APRÈS ce mot. →",
-            "after"
-        );
+      return false;
 
     }
 
 
-    /*
-        MOT APRES LE SECRET
-    */
-    else {
-
-        upperBound = guess;
-
-        showMessage(
-            "Le mot mystère est AVANT ce mot. ←",
-            "before"
-        );
-    }
+    const data =
+      snapshot.data();
 
 
-    guessInput.value = "";
+    attempts =
+      data.attempts || 0;
 
+    guesses =
+      data.guesses || [];
+
+    lowerBound =
+      data.lowerBound || null;
+
+    upperBound =
+      data.upperBound || null;
+
+    gameFinished =
+      data.finished || false;
+
+
+    attemptCount.textContent =
+      attempts;
 
     renderHistory();
 
-    updateDisplay();
+    renderAlphabet();
 
 
-    /*
-        Limite d'essais.
-    */
-    if (guesses.length >= MAX_ATTEMPTS) {
+    if (gameFinished) {
 
-        gameOver = true;
-
-        await finishGame(
-            false,
-            guesses.length
-        );
-
-        return;
-    }
-
-
-    await saveProgress();
-
-    guessInput.focus();
-}
-
-
-/* =====================================================
-   SAUVEGARDE PARTIE EN COURS
-===================================================== */
-
-async function saveProgress() {
-
-    try {
-
-        const resultRef =
-            doc(
-                db,
-                "dicoResults",
-                `${todayStr}_${pseudoDocId(currentPseudo)}`
-            );
-
-
-        await setDoc(
-            resultRef,
-            {
-                pseudo: currentPseudo,
-
-                date: todayStr,
-
-                guesses: guesses,
-
-                attempts: guesses.length,
-
-                solved: false,
-
-                finished: false,
-
-                updatedAt:
-                    serverTimestamp()
-            },
-            {
-                merge: true
-            }
-        );
-
-    } catch (error) {
-
-        console.error(
-            "Erreur sauvegarde :",
-            error
-        );
-
-        showMessage(
-            "La partie continue, mais la sauvegarde a échoué.",
-            "error"
-        );
-    }
-}
-
-
-/* =====================================================
-   FIN DE PARTIE
-===================================================== */
-
-async function finishGame(
-    solved,
-    attempts
-) {
-
-    if (saveInProgress) {
-        return;
-    }
-
-    saveInProgress = true;
-
-
-    /*
-        Plus le joueur trouve rapidement,
-        plus il gagne de points.
-
-        1er essai = 20 points
-        2e = 19
-        ...
-        20e = 1 point
-
-        Défaite = 0.
-    */
-    const points =
-        solved
-            ? Math.max(
-                1,
-                MAX_ATTEMPTS + 1 - attempts
-              )
-            : 0;
-
-
-    try {
-
-        const playerRef =
-            doc(
-                db,
-                "players",
-                pseudoDocId(currentPseudo)
-            );
-
-
-        const resultRef =
-            doc(
-                db,
-                "dicoResults",
-                `${todayStr}_${pseudoDocId(currentPseudo)}`
-            );
-
-
-        /*
-            Récupération du joueur.
-        */
-        const playerSnap =
-            await getDoc(playerRef);
-
-
-        const previous =
-            playerSnap.exists()
-                ? playerSnap.data()
-                : {
-                    totalDicoPoints: 0,
-                    dicoWins: 0,
-                    dicoGames: 0
-                  };
-
-
-        const batch =
-            writeBatch(db);
-
-
-        /*
-            Résultat du jour.
-        */
-        batch.set(
-            resultRef,
-            {
-                pseudo: currentPseudo,
-
-                date: todayStr,
-
-                guesses: guesses,
-
-                attempts: attempts,
-
-                solved: solved,
-
-                finished: true,
-
-                points: points,
-
-                secretWord: secretWord,
-
-                updatedAt:
-                    serverTimestamp()
-            },
-            {
-                merge: true
-            }
-        );
-
-
-        /*
-            Statistiques du joueur.
-        */
-        batch.set(
-            playerRef,
-            {
-                pseudo: currentPseudo,
-
-                totalDicoPoints:
-                    increment(points),
-
-                dicoWins:
-                    increment(
-                        solved ? 1 : 0
-                    ),
-
-                dicoGames:
-                    increment(1),
-
-                updatedAt:
-                    serverTimestamp()
-            },
-            {
-                merge: true
-            }
-        );
-
-
-        await batch.commit();
-
-
-        showFinalResult(
-            solved,
-            attempts,
-            points
-        );
-
-
-    } catch (error) {
-
-        console.error(error);
-
-        showMessage(
-            "Erreur lors de l'enregistrement du résultat. Réessaie.",
-            "error"
-        );
-
-        gameOver = false;
-
-    } finally {
-
-        saveInProgress = false;
-    }
-}
-
-
-/* =====================================================
-   RESULTAT FINAL
-===================================================== */
-
-function showFinalResult(
-    solved,
-    attempts,
-    points
-) {
-
-    resultCard.classList.remove(
-        "hidden"
-    );
-
-
-    if (solved) {
-
-        resultBig.textContent =
-            `🎉 Trouvé en ${attempts} essai${attempts > 1 ? "s" : ""} !`;
-
-        resultSmall.textContent =
-            `+${points} point${points > 1 ? "s" : ""}`;
-
-        showMessage(
-            `Bravo ! Le mot était ${secretWord}.`,
-            "win"
-        );
+      showFinishedGame(
+        data.won === true
+      );
 
     } else {
 
-        resultBig.textContent =
-            "😢 Raté !";
+      setMessage(
+        "Tu peux continuer ta partie.",
+        "info"
+      );
 
-        resultSmall.textContent =
-            `Le mot était : ${secretWord}`;
+    }
 
-        showMessage(
-            `Le mot mystère était "${secretWord}".`,
-            "error"
+
+    return true;
+
+  }
+
+
+  /* ============================================================
+     FIN DE PARTIE
+     ============================================================ */
+
+  async function finishGame(won) {
+
+    gameFinished = true;
+
+    guessInput.disabled = true;
+
+    guessButton.disabled = true;
+
+
+    const points =
+      won
+        ? calculatePoints()
+        : 0;
+
+
+    result.classList.remove("hidden");
+
+
+    if (won) {
+
+      resultTitle.textContent =
+        "🎉 Bravo !";
+
+      resultPoints.textContent =
+        `Tu gagnes ${points} point${points > 1 ? "s" : ""}.`;
+
+      setMessage(
+        "Mot trouvé !",
+        "success"
+      );
+
+    } else {
+
+      resultTitle.textContent =
+        "Partie terminée";
+
+      resultPoints.textContent =
+        "0 point";
+
+      setMessage(
+        "Dommage, le nombre maximum de tentatives est atteint.",
+        "error"
+      );
+
+    }
+
+
+    resultWord.textContent =
+      secretWord;
+
+
+    await saveGame();
+
+
+    /*
+       Mise à jour du classement.
+    */
+
+    const playerId =
+      getPseudoId();
+
+    const playerRef =
+      doc(
+        db,
+        PLAYERS_COLLECTION,
+        playerId
+      );
+
+
+    try {
+
+      const playerSnapshot =
+        await getDoc(playerRef);
+
+
+      if (!playerSnapshot.exists()) {
+
+        await setDoc(
+          playerRef,
+          {
+            pseudo: pseudo,
+            totalDicoPoints: points,
+            dicoWins: won ? 1 : 0,
+            dicoGames: 1
+          }
         );
+
+      } else {
+
+        await updateDoc(
+          playerRef,
+          {
+            totalDicoPoints:
+              increment(points),
+
+            dicoWins:
+              increment(won ? 1 : 0),
+
+            dicoGames:
+              increment(1)
+          }
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Erreur classement :",
+        error
+      );
+
+    }
+
+
+    loadLeaderboard();
+
+  }
+
+
+  /* ============================================================
+     AFFICHAGE PARTIE TERMINEE
+     ============================================================ */
+
+  function showFinishedGame(won) {
+
+    result.classList.remove("hidden");
+
+    resultWord.textContent =
+      secretWord;
+
+
+    if (won) {
+
+      resultTitle.textContent =
+        "🎉 Partie déjà terminée";
+
+      resultPoints.textContent =
+        "Tu as déjà trouvé le mot aujourd'hui.";
+
+      setMessage(
+        "Tu as déjà joué aujourd'hui.",
+        "success"
+      );
+
+    } else {
+
+      resultTitle.textContent =
+        "Partie déjà terminée";
+
+      resultPoints.textContent =
+        "Cette partie est terminée.";
+
+      setMessage(
+        "Tu as déjà terminé ta partie aujourd'hui.",
+        "error"
+      );
+
     }
 
 
     guessInput.disabled = true;
 
     guessButton.disabled = true;
-}
+
+  }
 
 
-/* =====================================================
-   CLASSEMENT
-===================================================== */
+  /* ============================================================
+     PROPOSITION D'UN MOT
+     ============================================================ */
 
-function startLeaderboard() {
+  async function submitGuess() {
 
-    const playersQuery =
-        query(
-            collection(
-                db,
-                "players"
-            ),
-            orderBy(
-                "totalDicoPoints",
-                "desc"
-            ),
-            limit(50)
-        );
+    if (gameFinished) {
 
+      return;
 
-    onSnapshot(
-        playersQuery,
-        (snapshot) => {
-
-            leaderboard.innerHTML = "";
-
-
-            if (snapshot.empty) {
-
-                leaderboardEmpty.style.display =
-                    "block";
-
-                return;
-            }
-
-
-            leaderboardEmpty.style.display =
-                "none";
-
-
-            let rank = 0;
-
-
-            snapshot.forEach(
-                (docSnap) => {
-
-                    rank++;
-
-
-                    const data =
-                        docSnap.data();
-
-
-                    const row =
-                        document.createElement("div");
-
-                    row.className =
-                        "board-row";
-
-
-                    const rankElement =
-                        document.createElement("span");
-
-                    rankElement.className =
-                        "rank";
-
-                    rankElement.textContent =
-                        "#" + rank;
-
-
-                    const name =
-                        document.createElement("span");
-
-                    name.className =
-                        "player-name";
-
-
-                    name.textContent =
-                        data.pseudo || "?";
-
-
-                    if (
-                        data.pseudo ===
-                        currentPseudo
-                    ) {
-
-                        const you =
-                            document.createElement("span");
-
-                        you.className =
-                            "you";
-
-                        you.textContent =
-                            "TOI";
-
-                        name.appendChild(
-                            you
-                        );
-                    }
-
-
-                    const points =
-                        document.createElement("span");
-
-                    points.className =
-                        "player-points";
-
-                    points.textContent =
-                        `${data.totalDicoPoints || 0} pts`;
-
-
-                    row.appendChild(
-                        rankElement
-                    );
-
-                    row.appendChild(
-                        name
-                    );
-
-                    row.appendChild(
-                        points
-                    );
-
-
-                    leaderboard.appendChild(
-                        row
-                    );
-                }
-            );
-        },
-        (error) => {
-
-            console.error(
-                "Erreur classement :",
-                error
-            );
-        }
-    );
-}
-
-
-/* =====================================================
-   PSEUDO
-===================================================== */
-
-async function startGame() {
-
-    const pseudo =
-        pseudoInput.value.trim();
-
-
-    if (!pseudo) {
-
-        pseudoError.classList.remove(
-            "hidden"
-        );
-
-        return;
     }
 
 
-    pseudoError.classList.add(
-        "hidden"
-    );
+    /*
+       Toujours transformer en majuscules.
+    */
+
+    const guess =
+      normalizeWord(
+        guessInput.value
+      );
 
 
-    currentPseudo =
-        pseudo;
+    guessInput.value =
+      guess;
+
+
+    /* Mot vide */
+
+    if (!guess) {
+
+      setMessage(
+        "Entre un mot.",
+        "error"
+      );
+
+      return;
+
+    }
+
+
+    /* Mauvaise longueur */
+
+    if (guess.length !== wordLength) {
+
+      setMessage(
+        `Le mot doit comporter ${wordLength} lettres.`,
+        "error"
+      );
+
+      guessInput.focus();
+
+      return;
+
+    }
+
+
+    /* Mot déjà proposé */
+
+    if (
+      guesses.some(
+        item => item.word === guess
+      )
+    ) {
+
+      setMessage(
+        "Tu as déjà proposé ce mot.",
+        "error"
+      );
+
+      guessInput.select();
+
+      return;
+
+    }
+
+
+    /*
+       Vérification du dictionnaire.
+    */
+
+    if (!acceptedWords.has(guess)) {
+
+      setMessage(
+        "Ce mot n'est pas dans le dictionnaire.",
+        "error"
+      );
+
+      guessInput.select();
+
+      return;
+
+    }
+
+
+    /*
+       On ne doit pas pouvoir proposer
+       un mot en dehors de la zone actuelle.
+    */
+
+    if (
+      lowerBound &&
+      compareWords(guess, lowerBound) <= 0
+    ) {
+
+      setMessage(
+        `Le mot doit être après ${lowerBound}.`,
+        "error"
+      );
+
+      guessInput.select();
+
+      return;
+
+    }
+
+
+    if (
+      upperBound &&
+      compareWords(guess, upperBound) >= 0
+    ) {
+
+      setMessage(
+        `Le mot doit être avant ${upperBound}.`,
+        "error"
+      );
+
+      guessInput.select();
+
+      return;
+
+    }
+
+
+    attempts++;
+
+    attemptCount.textContent =
+      attempts;
+
+
+    /* ==========================================
+       MOT TROUVÉ
+       ========================================== */
+
+    if (
+      compareWords(
+        guess,
+        secretWord
+      ) === 0
+    ) {
+
+      guesses.push({
+        word: guess,
+        result: "correct"
+      });
+
+
+      renderHistory();
+
+      renderAlphabet();
+
+      await finishGame(true);
+
+      return;
+
+    }
+
+
+    /* ==========================================
+       AVANT
+       ========================================== */
+
+    if (
+      compareWords(
+        guess,
+        secretWord
+      ) < 0
+    ) {
+
+      lowerBound =
+        guess;
+
+
+      guesses.push({
+        word: guess,
+        result: "before"
+      });
+
+
+      setMessage(
+        "AVANT le mot mystère",
+        "before"
+      );
+
+    }
+
+
+    /* ==========================================
+       APRÈS
+       ========================================== */
+
+    else {
+
+      upperBound =
+        guess;
+
+
+      guesses.push({
+        word: guess,
+        result: "after"
+      });
+
+
+      setMessage(
+        "APRÈS le mot mystère",
+        "after"
+      );
+
+    }
+
+
+    renderHistory();
+
+    renderAlphabet();
+
+
+    await saveGame();
+
+
+    /*
+       Nombre maximum de tentatives.
+    */
+
+    if (
+      attempts >= MAX_ATTEMPTS
+    ) {
+
+      await finishGame(false);
+
+      return;
+
+    }
+
+
+    guessInput.value = "";
+
+    guessInput.focus();
+
+  }
+
+
+  /* ============================================================
+     CLASSEMENT
+     ============================================================ */
+
+  async function loadLeaderboard() {
+
+    leaderboard.innerHTML =
+      `<div class="loading">Chargement...</div>`;
+
+
+    try {
+
+      const playersRef =
+        collection(
+          db,
+          PLAYERS_COLLECTION
+        );
+
+
+      const q =
+        query(
+          playersRef,
+          orderBy(
+            "totalDicoPoints",
+            "desc"
+          ),
+          limit(50)
+        );
+
+
+      const snapshot =
+        await getDocs(q);
+
+
+      leaderboard.innerHTML = "";
+
+
+      if (snapshot.empty) {
+
+        leaderboard.innerHTML =
+          `<div class="loading">
+             Aucun joueur pour le moment.
+           </div>`;
+
+        return;
+
+      }
+
+
+      let rank = 1;
+
+
+      snapshot.forEach(docSnapshot => {
+
+        const data =
+          docSnapshot.data();
+
+
+        const row =
+          document.createElement("div");
+
+        row.className =
+          "leaderboard-row";
+
+
+        const rankElement =
+          document.createElement("div");
+
+        rankElement.className =
+          "rank";
+
+        rankElement.textContent =
+          rank + ".";
+
+
+        const playerElement =
+          document.createElement("div");
+
+        playerElement.className =
+          "player";
+
+        playerElement.textContent =
+          data.pseudo || "Joueur";
+
+
+        const pointsElement =
+          document.createElement("div");
+
+        pointsElement.className =
+          "points";
+
+        pointsElement.textContent =
+          `${data.totalDicoPoints || 0} pts`;
+
+
+        row.appendChild(
+          rankElement
+        );
+
+        row.appendChild(
+          playerElement
+        );
+
+        row.appendChild(
+          pointsElement
+        );
+
+
+        leaderboard.appendChild(row);
+
+
+        rank++;
+
+      });
+
+    } catch (error) {
+
+      console.error(
+        "Erreur classement :",
+        error
+      );
+
+
+      leaderboard.innerHTML =
+        `<div class="loading">
+           Impossible de charger le classement.
+         </div>`;
+
+    }
+
+  }
+
+
+  /* ============================================================
+     DEMARRAGE DU JEU
+     ============================================================ */
+
+  async function startGame() {
+
+    const enteredPseudo =
+      pseudoInput.value.trim();
+
+
+    if (!enteredPseudo) {
+
+      alert(
+        "Entre un pseudo."
+      );
+
+      pseudoInput.focus();
+
+      return;
+
+    }
+
+
+    pseudo =
+      enteredPseudo;
 
 
     localStorage.setItem(
-        "dicoPseudo",
-        currentPseudo
+      "dicoPseudo",
+      pseudo
     );
 
 
-    pseudoSection.classList.add(
+    startButton.disabled =
+      true;
+
+
+    try {
+
+      /*
+         Chargement des fichiers JSON.
+      */
+
+      await loadSecretWords();
+
+      await loadAcceptedWords();
+
+
+      /*
+         Mot du jour.
+      */
+
+      secretWord =
+        getTodayWord();
+
+
+      wordLength =
+        secretWord.length;
+
+
+      /*
+         Affichage.
+      */
+
+      wordLengthElement.textContent =
+        wordLength;
+
+
+      displayDate();
+
+
+      /*
+         Affichage du jeu.
+      */
+
+      pseudoSection.classList.add(
         "hidden"
-    );
+      );
 
-    gameSection.classList.remove(
+      gameSection.classList.remove(
         "hidden"
-    );
+      );
 
 
-    await initGame();
-}
+      /*
+         Partie éventuellement déjà commencée.
+      */
+
+      await loadSavedGame();
 
 
-/* =====================================================
-   CHANGER DE PSEUDO
-===================================================== */
+      /*
+         Classement.
+      */
 
-function changePlayer() {
-
-    gameSection.classList.add(
-        "hidden"
-    );
-
-    pseudoSection.classList.remove(
-        "hidden"
-    );
-
-    pseudoInput.value =
-        currentPseudo;
-
-    pseudoInput.focus();
-}
+      await loadLeaderboard();
 
 
-/* =====================================================
-   EVENEMENTS
-===================================================== */
+      if (!gameFinished) {
 
-playButton.addEventListener(
+        guessInput.focus();
+
+      }
+
+    } catch (error) {
+
+      console.error(error);
+
+
+      alert(
+        error.message
+        ||
+        "Une erreur est survenue."
+      );
+
+
+      startButton.disabled =
+        false;
+
+    }
+
+  }
+
+
+  /* ============================================================
+     EVENEMENTS
+     ============================================================ */
+
+  startButton.addEventListener(
     "click",
     startGame
-);
+  );
 
 
-guessButton.addEventListener(
+  guessButton.addEventListener(
     "click",
     submitGuess
-);
+  );
 
 
-changePseudo.addEventListener(
-    "click",
-    changePlayer
-);
-
-
-/*
-    Entrée clavier pour valider le mot.
-*/
-guessInput.addEventListener(
+  pseudoInput.addEventListener(
     "keydown",
-    (event) => {
+    event => {
 
-        if (
-            event.key === "Enter"
-        ) {
+      if (
+        event.key === "Enter"
+      ) {
 
-            event.preventDefault();
+        startGame();
 
-            submitGuess();
-        }
+      }
+
     }
-);
+  );
 
 
-/*
-    Entrée clavier sur le pseudo.
-*/
-pseudoInput.addEventListener(
-    "keydown",
-    (event) => {
-
-        if (
-            event.key === "Enter"
-        ) {
-
-            event.preventDefault();
-
-            startGame();
-        }
-    }
-);
-
-
-/* =====================================================
-   DEMARRAGE
-===================================================== */
-
-window.addEventListener(
-    "load",
+  guessInput.addEventListener(
+    "input",
     () => {
 
-        const savedPseudo =
-            localStorage.getItem(
-                "dicoPseudo"
-            );
+      /*
+         Affichage immédiatement en majuscules.
+      */
 
+      const position =
+        guessInput.selectionStart;
 
-        if (savedPseudo) {
+      guessInput.value =
+        guessInput.value.toUpperCase();
 
-            pseudoInput.value =
-                savedPseudo;
-        }
+      try {
+
+        guessInput.setSelectionRange(
+          position,
+          position
+        );
+
+      } catch (e) {}
+
     }
-);
+  );
+
+
+  guessInput.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Enter"
+      ) {
+
+        submitGuess();
+
+      }
+
+    }
+  );
+
+
+  /* ============================================================
+     RESTAURATION DU PSEUDO
+     ============================================================ */
+
+  const savedPseudo =
+    localStorage.getItem(
+      "dicoPseudo"
+    );
+
+
+  if (savedPseudo) {
+
+    pseudoInput.value =
+      savedPseudo;
+
+  }
 
 </script>
 
 </body>
 </html>
-
