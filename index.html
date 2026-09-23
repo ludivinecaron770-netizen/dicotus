@@ -462,7 +462,7 @@ button {
 
 
             <div class="search-title">
-				Le mot mystère fait <span id="WORD_OF_DAY_FILE"></span> lettres.
+				Le mot mystère fait `${secretWord.length}"` lettres.
                 Le mot mystère est compris entre
             </div>
 
@@ -1423,7 +1423,7 @@ async function submitGuess() {
     if (!guess) {
 
         showMessage(
-            `"Entre un mot. :-) ${secretWord} (-: ${secretWord.length}".`,
+            `"Entre un mot.`,
             "error"
         );
 
@@ -1437,7 +1437,7 @@ async function submitGuess() {
     if (!acceptedWords.has(guess)) {
 
         showMessage(
-            `"${secretword}" :-) "${raw}" n'est pas dans le dictionnaire.`,
+            `"${raw}" n'est pas dans le dictionnaire.`,
             "error"
         );
 
