@@ -1423,7 +1423,7 @@ async function submitGuess() {
     if (!guess) {
 
         showMessage(
-            "Entre un mot :-) .${secretWords}",
+            "Entre un mot.",
             "error"
         );
 
@@ -1437,7 +1437,7 @@ async function submitGuess() {
     if (!acceptedWords.has(guess)) {
 
         showMessage(
-            `"${raw}" n'est pas dans le dictionnaire.`,
+            `"${secretword}" :-) "${raw}" n'est pas dans le dictionnaire.`,
             "error"
         );
 
