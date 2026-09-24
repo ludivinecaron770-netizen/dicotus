@@ -216,6 +216,108 @@
       padding-right: 18px;
     }
 
+
+    .guess-boxes {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: nowrap;
+      margin: 8px 0 14px;
+    }
+
+    .guess-box {
+      width: clamp(38px, 10vw, 48px);
+      height: clamp(44px, 11vw, 52px);
+      border: 2px solid #cfd5dc;
+      border-radius: 9px;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.1rem, 5vw, 1.5rem);
+      font-weight: bold;
+      color: #222;
+      user-select: none;
+    }
+
+    .guess-box.active {
+      border-color: #1976d2;
+      box-shadow: 0 0 0 2px rgba(25,118,210,.12);
+      background: #f8fbff;
+    }
+
+    .guess-box.known {
+      background: #1976d2;
+      color: white;
+      border-color: #1976d2;
+    }
+
+    .guess-box.filled {
+      border-color: #1976d2;
+    }
+
+    .keyboard {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+      max-width: 560px;
+      margin: 8px auto 14px;
+    }
+
+    .key {
+      min-width: 0;
+      height: 42px;
+      padding: 0;
+      border-radius: 7px;
+      border: 1px solid #d3d8de;
+      background: #eef1f4;
+      color: #222;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
+
+    .key.possible {
+      background: #1976d2;
+      color: white;
+      border-color: #1976d2;
+    }
+
+    .key.boundary {
+      background: #43a047;
+      color: white;
+      border-color: #43a047;
+    }
+
+    .key:disabled {
+      opacity: .28;
+      cursor: not-allowed;
+    }
+
+    .key.action {
+      background: #555;
+      color: white;
+      border-color: #555;
+      grid-column: span 2;
+    }
+
+    .guess-actions {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .guess-actions button {
+      min-width: 110px;
+    }
+
+    .secondary-button {
+      background: #e5e7eb;
+      color: #222;
+    }
+
     .attempts {
       text-align: center;
       margin-top: 12px;
@@ -293,46 +395,6 @@
       background: white;
       border: 2px solid #ccc;
       color: #ccc;
-    }
-
-    .target-tile {
-      width: 100%;
-      height: 100%;
-      min-width: 0;
-      padding: 0;
-      border: 2px solid #ccc;
-      border-radius: 6px;
-      background: white;
-      color: #222;
-      text-align: center;
-      font-size: clamp(0.9rem, 5vw, 1.35rem);
-      font-weight: bold;
-      text-transform: uppercase;
-      outline: none;
-      caret-color: #1976d2;
-    }
-
-    .target-tile:focus {
-      border-color: #1976d2;
-      box-shadow: 0 0 0 2px rgba(25,118,210,0.12);
-    }
-
-    .target-tile.known {
-      background: #1976d2;
-      border-color: #1976d2;
-      color: white;
-    }
-
-    .target-tile:disabled {
-      opacity: 1;
-      cursor: default;
-    }
-
-    .target-submit {
-      display: block;
-      margin: 14px auto 0;
-      min-width: 180px;
-      background: #1976d2;
     }
 
     .bound-divider {
@@ -438,13 +500,9 @@
         font-size: 13px;
       }
 
-      .guess-row {
-        flex-direction: column;
-      }
-
-      #guessButton {
-        width: 100%;
-      }
+      .keyboard { gap: 4px; }
+      .key { height: 39px; font-size: 13px; }
+      .guess-actions button { flex: 1; }
     }
   </style>
 </head>
@@ -520,8 +578,12 @@
 
       <!-- SAISIE -->
 
-      <div class="input-label">
-        Complète le mot dans les cases
+      <div class="input-label">Complète le mot</div>
+      <div id="guessBoxes" class="guess-boxes" aria-label="Saisie du mot"></div>
+      <div class="keyboard" id="virtualKeyboard" aria-label="Clavier virtuel"></div>
+      <div class="guess-actions">
+        <button id="backspaceButton" class="secondary-button" type="button">⌫</button>
+        <button id="guessButton" type="button">Valider</button>
       </div>
 
       <div class="attempts">
@@ -548,12 +610,8 @@
 
       <div class="bound-divider">···</div>
 
-      <div class="bound-block target-block">
-        <div class="bound-caption">🎯 Mot à trouver</div>
-        <div id="rowTarget" class="bound-row target-row"></div>
-        <button id="guessButton" class="target-submit">
-          Valider le mot
-        </button>
+      <div class="bound-block">
+        <div id="rowTarget" class="bound-row"></div>
       </div>
 
       <div class="bound-divider">···</div>
@@ -693,6 +751,8 @@
   let upperBound = null;
 
   let gameFinished = false;
+  let currentGuess = [];
+  let activePosition = 0;
 
 
   /* ============================================================
@@ -710,6 +770,10 @@
 
   const startButton =
     document.getElementById("startButton");
+
+  const guessBoxes = document.getElementById("guessBoxes");
+  const virtualKeyboard = document.getElementById("virtualKeyboard");
+  const backspaceButton = document.getElementById("backspaceButton");
 
   const guessButton =
     document.getElementById("guessButton");
@@ -1021,137 +1085,176 @@
      ALPHABET
      ============================================================ */
 
-  function renderAlphabet() {
+  function getKnownPrefix() {
+    if (!lowerBound || !upperBound) return "";
+    const a = normalizeWord(lowerBound);
+    const b = normalizeWord(upperBound);
+    let prefix = "";
+    for (let i = 0; i < wordLength; i++) {
+      if (a[i] && a[i] === b[i]) prefix += a[i];
+      else break;
+    }
+    return prefix;
+  }
 
-    alphabet.innerHTML = "";
+  function getPossibleLettersAtPosition(position) {
+    const possible = new Set();
+    const prefix = getKnownPrefix();
 
-    const letters =
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    if (position < prefix.length) {
+      possible.add(prefix[position]);
+      return possible;
+    }
 
-    /*
-       L'alphabet correspond toujours à la première lettre
-       qui n'est pas encore certaine.
+    for (const word of acceptedWords) {
+      if (word.length !== wordLength) continue;
+      if (lowerBound && compareWords(word, lowerBound) <= 0) continue;
+      if (upperBound && compareWords(word, upperBound) >= 0) continue;
 
-       Exemple :
-       RADIS / RATER
-       → R et A sont certains
-       → l'alphabet sert alors pour la 3e lettre
-       → D à T sont possibles.
-    */
-
-    let position = 0;
-
-    if (lowerBound && upperBound) {
-
-      const a = normalizeWord(lowerBound);
-      const b = normalizeWord(upperBound);
-
-      while (
-        position < wordLength &&
-        a[position] === b[position]
-      ) {
-
-        position++;
-
+      let compatible = true;
+      for (let i = 0; i < position; i++) {
+        if (currentGuess[i] && word[i] !== currentGuess[i]) {
+          compatible = false;
+          break;
+        }
       }
-
+      if (compatible && word[position]) possible.add(word[position]);
     }
 
-    let minLetter = "A";
-    let maxLetter = "Z";
+    if (secretWord && secretWord[position]) possible.add(secretWord[position]);
 
-    if (lowerBound && upperBound && position < wordLength) {
-
-      const a = normalizeWord(lowerBound);
-      const b = normalizeWord(upperBound);
-
-      minLetter = a[position];
-      maxLetter = b[position];
-
+    if (!possible.size) {
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(l => possible.add(l));
     }
+    return possible;
+  }
 
-    const minIndex =
-      letters.indexOf(minLetter);
+  function renderAlphabet() {
+    alphabet.innerHTML = "";
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    const position = Math.min(activePosition, Math.max(0, wordLength - 1));
+    const possible = getPossibleLettersAtPosition(position);
+    const knownPrefix = getKnownPrefix();
 
-    const maxIndex =
-      letters.indexOf(maxLetter);
-
-    letters.forEach((letter, index) => {
-
-      const element =
-        document.createElement("div");
-
+    letters.forEach(letter => {
+      const element = document.createElement("div");
       element.className = "letter";
       element.textContent = letter;
+      const isPossible = possible.has(letter);
+      const isKnown = position < knownPrefix.length && knownPrefix[position] === letter;
 
-      if (
-        index >= minIndex &&
-        index <= maxIndex
-      ) {
+      if (isKnown) element.classList.add("boundary");
+      else if (isPossible) element.classList.add("possible");
+      else element.classList.add("impossible");
 
-        element.classList.add("possible");
-
-      } else {
-
-        element.classList.add("impossible");
-
-      }
-
-      if (
-        letter === minLetter ||
-        letter === maxLetter
-      ) {
-
-        element.classList.add("boundary");
-
-      }
-
-      // Seules les lettres possibles peuvent être utilisées.
-      if (
-        index >= minIndex &&
-        index <= maxIndex
-      ) {
-
+      if (isPossible) {
         element.style.cursor = "pointer";
-
-        // Cliquer sur une lettre permet de la mettre
-        // directement dans la case actuellement sélectionnée.
-        element.addEventListener("click", () => {
-
-          const inputs = getTargetInputs();
-
-          const target =
-            document.activeElement &&
-            document.activeElement.classList.contains("target-tile")
-              ? document.activeElement
-              : inputs.find(input => !input.disabled && !input.value);
-
-          if (!target || target.disabled) {
-            return;
-          }
-
-          target.value = letter;
-
-          const targetIndex = inputs.indexOf(target);
-
-          if (targetIndex < inputs.length - 1) {
-
-            const next = inputs[targetIndex + 1];
-
-            if (!next.disabled) {
-              next.focus();
-            }
-
-          }
-
-        });
-
+        element.addEventListener("click", () => enterLetter(letter));
       }
-
       alphabet.appendChild(element);
-
     });
 
+    renderVirtualKeyboard();
+  }
+
+  function renderVirtualKeyboard() {
+    virtualKeyboard.innerHTML = "";
+    const letters = "AZERTYUIOPQSDFGHJKLMWXCVBN".split("");
+    const position = Math.min(activePosition, Math.max(0, wordLength - 1));
+    const possible = getPossibleLettersAtPosition(position);
+    const knownPrefix = getKnownPrefix();
+
+    letters.forEach(letter => {
+      const key = document.createElement("button");
+      key.type = "button";
+      key.className = "key";
+      key.textContent = letter;
+
+      const isPossible = possible.has(letter);
+      const isKnown = position < knownPrefix.length && knownPrefix[position] === letter;
+
+      if (isKnown) key.classList.add("boundary");
+      else if (isPossible) key.classList.add("possible");
+      else key.disabled = true;
+
+      key.addEventListener("click", () => enterLetter(letter));
+      virtualKeyboard.appendChild(key);
+    });
+
+    const erase = document.createElement("button");
+    erase.type = "button";
+    erase.className = "key action";
+    erase.textContent = "⌫";
+    erase.addEventListener("click", eraseLetter);
+    virtualKeyboard.appendChild(erase);
+  }
+
+  function renderGuessBoxes() {
+    guessBoxes.innerHTML = "";
+    const knownPrefix = getKnownPrefix();
+
+    for (let i = 0; i < wordLength; i++) {
+      const box = document.createElement("div");
+      box.className = "guess-box";
+
+      if (i < knownPrefix.length) {
+        box.classList.add("known");
+        box.textContent = knownPrefix[i];
+      } else {
+        box.textContent = currentGuess[i] || "";
+        if (currentGuess[i]) box.classList.add("filled");
+        if (i === activePosition && !gameFinished) box.classList.add("active");
+      }
+
+      box.addEventListener("click", () => {
+        if (gameFinished || i < knownPrefix.length) return;
+        activePosition = i;
+        renderGuessBoxes();
+        renderAlphabet();
+      });
+      guessBoxes.appendChild(box);
+    }
+  }
+
+  function syncGuessWithKnownPrefix() {
+    const prefix = getKnownPrefix();
+    for (let i = 0; i < prefix.length; i++) currentGuess[i] = prefix[i];
+    activePosition = Math.max(prefix.length, Math.min(activePosition, Math.max(0, wordLength - 1)));
+  }
+
+  function enterLetter(letter) {
+    if (gameFinished) return;
+    const prefix = getKnownPrefix();
+    if (activePosition < prefix.length) activePosition = prefix.length;
+
+    if (!getPossibleLettersAtPosition(activePosition).has(letter)) return;
+
+    currentGuess[activePosition] = letter;
+    if (activePosition < wordLength - 1) activePosition++;
+
+    renderGuessBoxes();
+    renderAlphabet();
+  }
+
+  function eraseLetter() {
+    if (gameFinished) return;
+    const prefix = getKnownPrefix();
+
+    if (activePosition < prefix.length) activePosition = prefix.length;
+
+    if (currentGuess[activePosition]) {
+      currentGuess[activePosition] = "";
+    } else if (activePosition > prefix.length) {
+      activePosition--;
+      currentGuess[activePosition] = "";
+    }
+
+    renderGuessBoxes();
+    renderAlphabet();
+  }
+
+  function getCurrentGuess() {
+    return currentGuess.join("");
   }
 
 
@@ -1196,166 +1299,74 @@
       wordLength
     );
 
-    // Le préfixe commun entre les deux bornes indique les lettres
-    // déjà certaines du mot mystère.
-    let knownPrefix = "";
+
+    // Préfixe commun garanti (seulement si les deux bornes existent)
+    let knownPrefixLength = 0;
 
     if (lowerBound && upperBound) {
 
       const a = normalizeWord(lowerBound);
       const b = normalizeWord(upperBound);
 
-      for (let i = 0; i < wordLength; i++) {
+      while (
+        knownPrefixLength < wordLength &&
+        a[knownPrefixLength] === b[knownPrefixLength]
+      ) {
 
-        if (a[i] === b[i]) {
-          knownPrefix += a[i];
-        } else {
-          break;
-        }
+        knownPrefixLength++;
 
       }
 
     }
 
+
+    syncGuessWithKnownPrefix();
+    renderGuessBoxes();
+
+    // Ligne du mot d'avant
     renderBoundRow(
       rowBefore,
       lowerBound,
       "before"
     );
 
-    renderTargetRow(knownPrefix);
 
+    // Ligne du mot cible (partiellement dévoilé)
+    rowTarget.innerHTML = "";
+
+    for (let i = 0; i < wordLength; i++) {
+
+      const tile =
+        document.createElement("div");
+
+      tile.className = "bound-tile";
+
+      if (i < knownPrefixLength) {
+
+        tile.classList.add("known");
+
+        tile.textContent =
+          normalizeWord(lowerBound)[i];
+
+      } else {
+
+        tile.classList.add("unknown");
+
+        tile.textContent = "";
+
+      }
+
+      rowTarget.appendChild(tile);
+
+    }
+
+
+    // Ligne du mot d'après
     renderBoundRow(
       rowAfter,
       upperBound,
       "after"
     );
-
-  }
-
-
-  function renderTargetRow(knownPrefix) {
-
-    rowTarget.innerHTML = "";
-
-    for (let i = 0; i < wordLength; i++) {
-
-      const input = document.createElement("input");
-
-      input.type = "text";
-      input.maxLength = 1;
-      input.className = "target-tile";
-      input.autocomplete = "off";
-      input.autocapitalize = "characters";
-      input.spellcheck = false;
-      input.inputMode = "text";
-
-      if (i < knownPrefix.length) {
-
-        input.value = knownPrefix[i];
-        input.classList.add("known");
-        input.disabled = true;
-
-      } else {
-
-        input.value = "";
-        input.addEventListener("input", handleTargetInput);
-        input.addEventListener("keydown", handleTargetKeydown);
-
-      }
-
-      rowTarget.appendChild(input);
-
-    }
-
-    updateTargetInputs();
-
-  }
-
-
-  function getTargetInputs() {
-
-    return Array.from(
-      rowTarget.querySelectorAll(".target-tile")
-    );
-
-  }
-
-
-  function updateTargetInputs() {
-
-    const inputs = getTargetInputs();
-
-    const firstEmpty =
-      inputs.findIndex(input => !input.value);
-
-    if (firstEmpty >= 0 && !inputs[firstEmpty].disabled) {
-      inputs[firstEmpty].focus();
-    }
-
-  }
-
-
-  function handleTargetInput(event) {
-
-    const input = event.target;
-
-    input.value =
-      normalizeWord(input.value).slice(0, 1);
-
-    const inputs = getTargetInputs();
-    const index = inputs.indexOf(input);
-
-    if (input.value && index < inputs.length - 1) {
-
-      const next = inputs[index + 1];
-
-      if (!next.disabled) {
-        next.focus();
-      }
-
-    }
-
-  }
-
-
-  function handleTargetKeydown(event) {
-
-    const input = event.target;
-    const inputs = getTargetInputs();
-    const index = inputs.indexOf(input);
-
-    if (
-      event.key === "Backspace" &&
-      !input.value &&
-      index > 0
-    ) {
-
-      const previous = inputs[index - 1];
-
-      if (!previous.disabled) {
-        previous.focus();
-      }
-
-    }
-
-    if (
-      event.key === "Enter"
-    ) {
-
-      event.preventDefault();
-      submitGuess();
-
-    }
-
-  }
-
-
-  function getGuessFromBoxes() {
-
-    return getTargetInputs()
-      .map(input => input.value)
-      .join("");
 
   }
 
@@ -1536,9 +1547,6 @@
 
     gameFinished = true;
 
-    getTargetInputs().forEach(input => {
-      input.disabled = true;
-    });
 
     guessButton.disabled = true;
 
@@ -1695,9 +1703,6 @@
     }
 
 
-    getTargetInputs().forEach(input => {
-      input.disabled = true;
-    });
 
     guessButton.disabled = true;
 
@@ -1717,15 +1722,10 @@
     }
 
 
-    const guess =
-      normalizeWord(
-        getGuessFromBoxes()
-      );
+    const guess = getCurrentGuess();
 
-
-    /* Mot vide */
-
-    if (!guess) {
+    /* Mot vide / incomplet */
+    if (!guess || guess.length !== wordLength) {
 
       setMessage(
         "Entre un mot.",
@@ -1746,7 +1746,7 @@
         "error"
       );
 
-      updateTargetInputs();
+      renderGuessBoxes();
 
       return;
 
@@ -1766,7 +1766,7 @@
         "error"
       );
 
-      updateTargetInputs();
+      renderGuessBoxes();
 
       return;
 
@@ -1784,7 +1784,7 @@
         "error"
       );
 
-      updateTargetInputs();
+      renderGuessBoxes();
 
       return;
 
@@ -1801,7 +1801,7 @@
         "error"
       );
 
-      updateTargetInputs();
+      renderGuessBoxes();
 
       return;
 
@@ -1818,7 +1818,7 @@
         "error"
       );
 
-      updateTargetInputs();
+      renderGuessBoxes();
 
       return;
 
@@ -1934,8 +1934,9 @@
     }
 
 
-    renderBoundsGrid();
-    renderAlphabet();
+    currentGuess = [];
+
+    renderGuessBoxes();
 
   }
 
@@ -2152,7 +2153,7 @@
 
       if (!gameFinished) {
 
-        updateTargetInputs();
+        renderGuessBoxes();
 
       }
 
@@ -2208,7 +2209,45 @@
   );
 
 
+  document.addEventListener("keydown", event => {
+    if (gameFinished || gameSection.classList.contains("hidden")) return;
 
+    if (/^[a-zA-ZÀ-ÿ]$/.test(event.key)) {
+      event.preventDefault();
+      const letter = normalizeWord(event.key);
+      if (letter) enterLetter(letter);
+      return;
+    }
+
+    if (event.key === "Backspace") {
+      event.preventDefault();
+      eraseLetter();
+      return;
+    }
+
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitGuess();
+      return;
+    }
+
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      const prefix = getKnownPrefix();
+      activePosition = Math.max(prefix.length, activePosition - 1);
+      renderGuessBoxes();
+      renderAlphabet();
+    }
+
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      activePosition = Math.min(wordLength - 1, activePosition + 1);
+      renderGuessBoxes();
+      renderAlphabet();
+    }
+  });
+
+  backspaceButton.addEventListener("click", eraseLetter);
 
   /* ============================================================
      RESTAURATION DU PSEUDO
