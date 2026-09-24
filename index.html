@@ -211,22 +211,6 @@
       gap: 8px;
     }
 
-    #guessInput {
-      flex: 1;
-      min-width: 0;
-      padding: 14px;
-      border: 2px solid #ccc;
-      border-radius: 10px;
-      font-size: 20px;
-      font-weight: bold;
-      text-transform: uppercase;
-      outline: none;
-    }
-
-    #guessInput:focus {
-      border-color: #1976d2;
-    }
-
     #guessButton {
       padding-left: 18px;
       padding-right: 18px;
@@ -309,6 +293,46 @@
       background: white;
       border: 2px solid #ccc;
       color: #ccc;
+    }
+
+    .target-tile {
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      padding: 0;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      background: white;
+      color: #222;
+      text-align: center;
+      font-size: clamp(0.9rem, 5vw, 1.35rem);
+      font-weight: bold;
+      text-transform: uppercase;
+      outline: none;
+      caret-color: #1976d2;
+    }
+
+    .target-tile:focus {
+      border-color: #1976d2;
+      box-shadow: 0 0 0 2px rgba(25,118,210,0.12);
+    }
+
+    .target-tile.known {
+      background: #1976d2;
+      border-color: #1976d2;
+      color: white;
+    }
+
+    .target-tile:disabled {
+      opacity: 1;
+      cursor: default;
+    }
+
+    .target-submit {
+      display: block;
+      margin: 14px auto 0;
+      min-width: 180px;
+      background: #1976d2;
     }
 
     .bound-divider {
@@ -496,25 +520,8 @@
 
       <!-- SAISIE -->
 
-      <label class="input-label" for="guessInput">
-        Proposer un mot
-      </label>
-
-      <div class="guess-row">
-
-        <input
-          type="text"
-          id="guessInput"
-          autocomplete="off"
-          autocapitalize="characters"
-          spellcheck="false"
-          placeholder="VOTRE MOT"
-        >
-
-        <button id="guessButton">
-          Valider
-        </button>
-
+      <div class="input-label">
+        Complète le mot dans les cases
       </div>
 
       <div class="attempts">
@@ -541,8 +548,12 @@
 
       <div class="bound-divider">···</div>
 
-      <div class="bound-block">
-        <div id="rowTarget" class="bound-row"></div>
+      <div class="bound-block target-block">
+        <div class="bound-caption">🎯 Mot à trouver</div>
+        <div id="rowTarget" class="bound-row target-row"></div>
+        <button id="guessButton" class="target-submit">
+          Valider le mot
+        </button>
       </div>
 
       <div class="bound-divider">···</div>
@@ -700,9 +711,6 @@
   const startButton =
     document.getElementById("startButton");
 
-  const guessInput =
-    document.getElementById("guessInput");
-
   const guessButton =
     document.getElementById("guessButton");
 
@@ -819,7 +827,7 @@
   async function loadSecretWords() {
 
     const response =
-      await fetch("mots_du_jour.json", {
+      await fetch("mot_du_jour.json", {
         cache: "no-cache"
       });
 
@@ -840,7 +848,7 @@
     if (secretWords.length === 0) {
 
       throw new Error(
-        "mots_du_jour.json ne contient aucun mot."
+        "mot_du_jour.json ne contient aucun mot."
       );
 
     }
@@ -855,7 +863,7 @@
   async function loadAcceptedWords() {
 
     const response =
-      await fetch("mots_acceptes.json", {
+      await fetch("mot_acceptes.json", {
         cache: "no-cache"
       });
 
@@ -1020,26 +1028,47 @@
     const letters =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-    let minLetter = "A";
+    /*
+       L'alphabet correspond toujours à la première lettre
+       qui n'est pas encore certaine.
 
+       Exemple :
+       RADIS / RATER
+       → R et A sont certains
+       → l'alphabet sert alors pour la 3e lettre
+       → D à T sont possibles.
+    */
+
+    let position = 0;
+
+    if (lowerBound && upperBound) {
+
+      const a = normalizeWord(lowerBound);
+      const b = normalizeWord(upperBound);
+
+      while (
+        position < wordLength &&
+        a[position] === b[position]
+      ) {
+
+        position++;
+
+      }
+
+    }
+
+    let minLetter = "A";
     let maxLetter = "Z";
 
+    if (lowerBound && upperBound && position < wordLength) {
 
-    if (lowerBound) {
+      const a = normalizeWord(lowerBound);
+      const b = normalizeWord(upperBound);
 
-      minLetter =
-        normalizeWord(lowerBound)[0];
-
-    }
-
-
-    if (upperBound) {
-
-      maxLetter =
-        normalizeWord(upperBound)[0];
+      minLetter = a[position];
+      maxLetter = b[position];
 
     }
-
 
     const minIndex =
       letters.indexOf(minLetter);
@@ -1047,18 +1076,13 @@
     const maxIndex =
       letters.indexOf(maxLetter);
 
-
     letters.forEach((letter, index) => {
 
       const element =
         document.createElement("div");
 
-      element.className =
-        "letter";
-
-      element.textContent =
-        letter;
-
+      element.className = "letter";
+      element.textContent = letter;
 
       if (
         index >= minIndex &&
@@ -1073,7 +1097,6 @@
 
       }
 
-
       if (
         letter === minLetter ||
         letter === maxLetter
@@ -1083,6 +1106,47 @@
 
       }
 
+      // Seules les lettres possibles peuvent être utilisées.
+      if (
+        index >= minIndex &&
+        index <= maxIndex
+      ) {
+
+        element.style.cursor = "pointer";
+
+        // Cliquer sur une lettre permet de la mettre
+        // directement dans la case actuellement sélectionnée.
+        element.addEventListener("click", () => {
+
+          const inputs = getTargetInputs();
+
+          const target =
+            document.activeElement &&
+            document.activeElement.classList.contains("target-tile")
+              ? document.activeElement
+              : inputs.find(input => !input.disabled && !input.value);
+
+          if (!target || target.disabled) {
+            return;
+          }
+
+          target.value = letter;
+
+          const targetIndex = inputs.indexOf(target);
+
+          if (targetIndex < inputs.length - 1) {
+
+            const next = inputs[targetIndex + 1];
+
+            if (!next.disabled) {
+              next.focus();
+            }
+
+          }
+
+        });
+
+      }
 
       alphabet.appendChild(element);
 
@@ -1132,71 +1196,166 @@
       wordLength
     );
 
-
-    // Préfixe commun garanti (seulement si les deux bornes existent)
-    let knownPrefixLength = 0;
+    // Le préfixe commun entre les deux bornes indique les lettres
+    // déjà certaines du mot mystère.
+    let knownPrefix = "";
 
     if (lowerBound && upperBound) {
 
       const a = normalizeWord(lowerBound);
       const b = normalizeWord(upperBound);
 
-      while (
-        knownPrefixLength < wordLength &&
-        a[knownPrefixLength] === b[knownPrefixLength]
-      ) {
+      for (let i = 0; i < wordLength; i++) {
 
-        knownPrefixLength++;
+        if (a[i] === b[i]) {
+          knownPrefix += a[i];
+        } else {
+          break;
+        }
 
       }
 
     }
 
-
-    // Ligne du mot d'avant
     renderBoundRow(
       rowBefore,
       lowerBound,
       "before"
     );
 
+    renderTargetRow(knownPrefix);
 
-    // Ligne du mot cible (partiellement dévoilé)
-    rowTarget.innerHTML = "";
-
-    for (let i = 0; i < wordLength; i++) {
-
-      const tile =
-        document.createElement("div");
-
-      tile.className = "bound-tile";
-
-      if (i < knownPrefixLength) {
-
-        tile.classList.add("known");
-
-        tile.textContent =
-          normalizeWord(lowerBound)[i];
-
-      } else {
-
-        tile.classList.add("unknown");
-
-        tile.textContent = "";
-
-      }
-
-      rowTarget.appendChild(tile);
-
-    }
-
-
-    // Ligne du mot d'après
     renderBoundRow(
       rowAfter,
       upperBound,
       "after"
     );
+
+  }
+
+
+  function renderTargetRow(knownPrefix) {
+
+    rowTarget.innerHTML = "";
+
+    for (let i = 0; i < wordLength; i++) {
+
+      const input = document.createElement("input");
+
+      input.type = "text";
+      input.maxLength = 1;
+      input.className = "target-tile";
+      input.autocomplete = "off";
+      input.autocapitalize = "characters";
+      input.spellcheck = false;
+      input.inputMode = "text";
+
+      if (i < knownPrefix.length) {
+
+        input.value = knownPrefix[i];
+        input.classList.add("known");
+        input.disabled = true;
+
+      } else {
+
+        input.value = "";
+        input.addEventListener("input", handleTargetInput);
+        input.addEventListener("keydown", handleTargetKeydown);
+
+      }
+
+      rowTarget.appendChild(input);
+
+    }
+
+    updateTargetInputs();
+
+  }
+
+
+  function getTargetInputs() {
+
+    return Array.from(
+      rowTarget.querySelectorAll(".target-tile")
+    );
+
+  }
+
+
+  function updateTargetInputs() {
+
+    const inputs = getTargetInputs();
+
+    const firstEmpty =
+      inputs.findIndex(input => !input.value);
+
+    if (firstEmpty >= 0 && !inputs[firstEmpty].disabled) {
+      inputs[firstEmpty].focus();
+    }
+
+  }
+
+
+  function handleTargetInput(event) {
+
+    const input = event.target;
+
+    input.value =
+      normalizeWord(input.value).slice(0, 1);
+
+    const inputs = getTargetInputs();
+    const index = inputs.indexOf(input);
+
+    if (input.value && index < inputs.length - 1) {
+
+      const next = inputs[index + 1];
+
+      if (!next.disabled) {
+        next.focus();
+      }
+
+    }
+
+  }
+
+
+  function handleTargetKeydown(event) {
+
+    const input = event.target;
+    const inputs = getTargetInputs();
+    const index = inputs.indexOf(input);
+
+    if (
+      event.key === "Backspace" &&
+      !input.value &&
+      index > 0
+    ) {
+
+      const previous = inputs[index - 1];
+
+      if (!previous.disabled) {
+        previous.focus();
+      }
+
+    }
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      event.preventDefault();
+      submitGuess();
+
+    }
+
+  }
+
+
+  function getGuessFromBoxes() {
+
+    return getTargetInputs()
+      .map(input => input.value)
+      .join("");
 
   }
 
@@ -1377,7 +1536,9 @@
 
     gameFinished = true;
 
-    guessInput.disabled = true;
+    getTargetInputs().forEach(input => {
+      input.disabled = true;
+    });
 
     guessButton.disabled = true;
 
@@ -1534,7 +1695,9 @@
     }
 
 
-    guessInput.disabled = true;
+    getTargetInputs().forEach(input => {
+      input.disabled = true;
+    });
 
     guessButton.disabled = true;
 
@@ -1556,12 +1719,8 @@
 
     const guess =
       normalizeWord(
-        guessInput.value
+        getGuessFromBoxes()
       );
-
-
-    guessInput.value =
-      guess;
 
 
     /* Mot vide */
@@ -1587,7 +1746,7 @@
         "error"
       );
 
-      guessInput.focus();
+      updateTargetInputs();
 
       return;
 
@@ -1607,7 +1766,7 @@
         "error"
       );
 
-      guessInput.select();
+      updateTargetInputs();
 
       return;
 
@@ -1625,7 +1784,7 @@
         "error"
       );
 
-      guessInput.select();
+      updateTargetInputs();
 
       return;
 
@@ -1642,7 +1801,7 @@
         "error"
       );
 
-      guessInput.select();
+      updateTargetInputs();
 
       return;
 
@@ -1659,7 +1818,7 @@
         "error"
       );
 
-      guessInput.select();
+      updateTargetInputs();
 
       return;
 
@@ -1775,9 +1934,8 @@
     }
 
 
-    guessInput.value = "";
-
-    guessInput.focus();
+    renderBoundsGrid();
+    renderAlphabet();
 
   }
 
@@ -1994,7 +2152,7 @@
 
       if (!gameFinished) {
 
-        guessInput.focus();
+        updateTargetInputs();
 
       }
 
@@ -2050,43 +2208,6 @@
   );
 
 
-  guessInput.addEventListener(
-    "input",
-    () => {
-
-      const position =
-        guessInput.selectionStart;
-
-      guessInput.value =
-        guessInput.value.toUpperCase();
-
-      try {
-
-        guessInput.setSelectionRange(
-          position,
-          position
-        );
-
-      } catch (e) {}
-
-    }
-  );
-
-
-  guessInput.addEventListener(
-    "keydown",
-    event => {
-
-      if (
-        event.key === "Enter"
-      ) {
-
-        submitGuess();
-
-      }
-
-    }
-  );
 
 
   /* ============================================================
