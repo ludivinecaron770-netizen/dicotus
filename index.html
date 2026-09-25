@@ -1064,26 +1064,18 @@
       return possible;
     }
 
-    for (const word of acceptedWords) {
-      if (word.length !== wordLength) continue;
-      if (lowerBound && compareWords(word, lowerBound) <= 0) continue;
-      if (upperBound && compareWords(word, upperBound) >= 0) continue;
+    const lower = lowerBound ? normalizeWord(lowerBound) : null;
+    const upper = upperBound ? normalizeWord(upperBound) : null;
 
-      let compatible = true;
-      for (let i = 0; i < position; i++) {
-        if (currentGuess[i] && word[i] !== currentGuess[i]) {
-          compatible = false;
-          break;
-        }
-      }
-      if (compatible && word[position]) possible.add(word[position]);
-    }
+    const minLetter = lower ? lower[position] : null;
+    const maxLetter = upper ? upper[position] : null;
 
-    if (secretWord && secretWord[position]) possible.add(secretWord[position]);
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter => {
+      if (minLetter && letter < minLetter) return;
+      if (maxLetter && letter > maxLetter) return;
+      possible.add(letter);
+    });
 
-    if (!possible.size) {
-      "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(l => possible.add(l));
-    }
     return possible;
   }
 
