@@ -115,49 +115,6 @@
       color: #1976d2;
     }
 
-    /* ALPHABET */
-
-    .alphabet-title {
-      text-align: center;
-      font-size: 15px;
-      color: #777;
-      margin-bottom: 10px;
-    }
-
-    .alphabet {
-      display: grid;
-      grid-template-columns: repeat(13, 1fr);
-      gap: 5px;
-      margin-bottom: 20px;
-    }
-
-    .letter {
-      height: 38px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      border-radius: 7px;
-      background: #e8edf2;
-      font-weight: bold;
-      font-size: 15px;
-      transition: 0.2s;
-    }
-
-    .letter.possible {
-      background: #1976d2;
-      color: white;
-    }
-
-    .letter.boundary {
-      background: #43a047;
-      color: white;
-      transform: scale(1.05);
-    }
-
-    .letter.impossible {
-      opacity: 0.22;
-    }
-
     /* INDICATION AVANT / APRES */
 
     #message {
@@ -491,15 +448,6 @@
         padding: 15px;
       }
 
-      .alphabet {
-        gap: 3px;
-      }
-
-      .letter {
-        height: 34px;
-        font-size: 13px;
-      }
-
       .keyboard { gap: 4px; }
       .key { height: 39px; font-size: 13px; }
       .guess-actions button { flex: 1; }
@@ -558,15 +506,6 @@
       <div class="word-length">
         Mot mystère : <span id="wordLength"></span> lettres
       </div>
-
-
-      <!-- ALPHABET -->
-
-      <div class="alphabet-title">
-        Les lettres encore possibles
-      </div>
-
-      <div id="alphabet" class="alphabet"></div>
 
 
 
@@ -805,9 +744,6 @@
 
   const message =
     document.getElementById("message");
-
-  const alphabet =
-    document.getElementById("alphabet");
 
   const rowBefore =
     document.getElementById("rowBefore");
@@ -1151,40 +1087,15 @@
     return possible;
   }
 
-  function renderAlphabet() {
-    alphabet.innerHTML = "";
-    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    const knownPrefix = getKnownPrefix();
-    const position = Math.min(knownPrefix.length, Math.max(0, wordLength - 1));
-    const possible = getPossibleLettersAtPosition(position);
-
-    letters.forEach(letter => {
-      const element = document.createElement("div");
-      element.className = "letter";
-      element.textContent = letter;
-      const isPossible = possible.has(letter);
-      const isKnown = position < knownPrefix.length && knownPrefix[position] === letter;
-
-      if (isKnown) element.classList.add("boundary");
-      else if (isPossible) element.classList.add("possible");
-      else element.classList.add("impossible");
-
-      if (isPossible) {
-        element.style.cursor = "pointer";
-        element.addEventListener("click", () => enterLetter(letter));
-      }
-      alphabet.appendChild(element);
-    });
-
-    renderVirtualKeyboard();
-  }
-
   function renderVirtualKeyboard() {
     virtualKeyboard.innerHTML = "";
     const letters = "AZERTYUIOPQSDFGHJKLMWXCVBN".split("");
     const knownPrefix = getKnownPrefix();
     const position = Math.min(knownPrefix.length, Math.max(0, wordLength - 1));
-    const possible = getPossibleLettersAtPosition(position);
+    const isAtRestrictedPosition = activePosition === position;
+    const possible = isAtRestrictedPosition
+      ? getPossibleLettersAtPosition(position)
+      : null;
 
     letters.forEach(letter => {
       const key = document.createElement("button");
@@ -1192,12 +1103,14 @@
       key.className = "key";
       key.textContent = letter;
 
-      const isPossible = possible.has(letter);
-      const isKnown = position < knownPrefix.length && knownPrefix[position] === letter;
+      if (isAtRestrictedPosition) {
+        const isPossible = possible.has(letter);
+        const isKnown = position < knownPrefix.length && knownPrefix[position] === letter;
 
-      if (isKnown) key.classList.add("boundary");
-      else if (isPossible) key.classList.add("possible");
-      else key.disabled = true;
+        if (isKnown) key.classList.add("boundary");
+        else if (isPossible) key.classList.add("possible");
+        else key.disabled = true;
+      }
 
       key.addEventListener("click", () => enterLetter(letter));
       virtualKeyboard.appendChild(key);
@@ -1232,7 +1145,7 @@
         if (gameFinished || i < knownPrefix.length) return;
         activePosition = i;
         renderGuessBoxes();
-        renderAlphabet();
+        renderVirtualKeyboard();
       });
       guessBoxes.appendChild(box);
     }
@@ -1258,7 +1171,7 @@
     if (activePosition < wordLength - 1) activePosition++;
 
     renderGuessBoxes();
-    renderAlphabet();
+    renderVirtualKeyboard();
   }
 
   function eraseLetter() {
@@ -1275,7 +1188,7 @@
     }
 
     renderGuessBoxes();
-    renderAlphabet();
+    renderVirtualKeyboard();
   }
 
   function getCurrentGuess() {
@@ -1490,7 +1403,7 @@
 
     renderBoundsGrid();
 
-    renderAlphabet();
+    renderVirtualKeyboard();
 
 
     if (gameFinished) {
@@ -1828,7 +1741,7 @@
 
       renderBoundsGrid();
 
-      renderAlphabet();
+      renderVirtualKeyboard();
 
       await finishGame(true);
 
@@ -1892,7 +1805,7 @@
 
     renderBoundsGrid();
 
-    renderAlphabet();
+    renderVirtualKeyboard();
 
 
     await saveGame();
@@ -2211,14 +2124,14 @@
       const prefix = getKnownPrefix();
       activePosition = Math.max(prefix.length, activePosition - 1);
       renderGuessBoxes();
-      renderAlphabet();
+      renderVirtualKeyboard();
     }
 
     if (event.key === "ArrowRight") {
       event.preventDefault();
       activePosition = Math.min(wordLength - 1, activePosition + 1);
       renderGuessBoxes();
-      renderAlphabet();
+      renderVirtualKeyboard();
     }
   });
 
