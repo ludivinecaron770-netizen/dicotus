@@ -1814,9 +1814,11 @@
     }
 
 
-    currentGuess = [];
+    currentGuess = getKnownPrefix().split("");
+    activePosition = Math.min(currentGuess.length, Math.max(0, wordLength - 1));
 
     renderGuessBoxes();
+    renderVirtualKeyboard();
 
   }
 
