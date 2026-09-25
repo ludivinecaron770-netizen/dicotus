@@ -218,26 +218,26 @@
 
 
     .guess-boxes {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(var(--word-length), minmax(0, 46px));
+      gap: 5px;
       justify-content: center;
-      gap: 6px;
-      flex-wrap: nowrap;
-      margin: 8px 0 14px;
     }
 
     .guess-box {
-      width: clamp(38px, 10vw, 48px);
-      height: clamp(44px, 11vw, 52px);
+      aspect-ratio: 1;
+      min-width: 0;
       border: 2px solid #cfd5dc;
-      border-radius: 9px;
+      border-radius: 6px;
       background: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: clamp(1.1rem, 5vw, 1.5rem);
+      font-size: clamp(0.85rem, 4.5vw, 1.3rem);
       font-weight: bold;
       color: #222;
       user-select: none;
+      text-transform: uppercase;
     }
 
     .guess-box.active {
@@ -612,7 +612,8 @@
       <div class="bound-divider">···</div>
 
       <div class="bound-block">
-        <div id="rowTarget" class="bound-row"></div>
+        <div class="bound-caption">Ton mot</div>
+        <div id="guessBoxes" class="guess-boxes" aria-label="Saisie du mot"></div>
       </div>
 
       <div class="bound-divider">···</div>
@@ -632,8 +633,6 @@
 
       <!-- SAISIE -->
 
-      <div class="input-label">Complète le mot</div>
-      <div id="guessBoxes" class="guess-boxes" aria-label="Saisie du mot"></div>
       <div class="keyboard" id="virtualKeyboard" aria-label="Clavier virtuel"></div>
       <div class="guess-actions">
         <button id="backspaceButton" class="secondary-button" type="button">⌫</button>
@@ -812,9 +811,6 @@
 
   const rowBefore =
     document.getElementById("rowBefore");
-
-  const rowTarget =
-    document.getElementById("rowTarget");
 
   const rowAfter =
     document.getElementById("rowAfter");
@@ -1158,9 +1154,9 @@
   function renderAlphabet() {
     alphabet.innerHTML = "";
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    const position = Math.min(activePosition, Math.max(0, wordLength - 1));
-    const possible = getPossibleLettersAtPosition(position);
     const knownPrefix = getKnownPrefix();
+    const position = Math.min(knownPrefix.length, Math.max(0, wordLength - 1));
+    const possible = getPossibleLettersAtPosition(position);
 
     letters.forEach(letter => {
       const element = document.createElement("div");
@@ -1186,9 +1182,9 @@
   function renderVirtualKeyboard() {
     virtualKeyboard.innerHTML = "";
     const letters = "AZERTYUIOPQSDFGHJKLMWXCVBN".split("");
-    const position = Math.min(activePosition, Math.max(0, wordLength - 1));
-    const possible = getPossibleLettersAtPosition(position);
     const knownPrefix = getKnownPrefix();
+    const position = Math.min(knownPrefix.length, Math.max(0, wordLength - 1));
+    const possible = getPossibleLettersAtPosition(position);
 
     letters.forEach(letter => {
       const key = document.createElement("button");
@@ -1253,7 +1249,10 @@
     const prefix = getKnownPrefix();
     if (activePosition < prefix.length) activePosition = prefix.length;
 
-    if (!getPossibleLettersAtPosition(activePosition).has(letter)) return;
+    if (
+      activePosition === prefix.length &&
+      !getPossibleLettersAtPosition(activePosition).has(letter)
+    ) return;
 
     currentGuess[activePosition] = letter;
     if (activePosition < wordLength - 1) activePosition++;
@@ -1326,26 +1325,6 @@
     );
 
 
-    // Préfixe commun garanti (seulement si les deux bornes existent)
-    let knownPrefixLength = 0;
-
-    if (lowerBound && upperBound) {
-
-      const a = normalizeWord(lowerBound);
-      const b = normalizeWord(upperBound);
-
-      while (
-        knownPrefixLength < wordLength &&
-        a[knownPrefixLength] === b[knownPrefixLength]
-      ) {
-
-        knownPrefixLength++;
-
-      }
-
-    }
-
-
     syncGuessWithKnownPrefix();
     renderGuessBoxes();
 
@@ -1355,36 +1334,6 @@
       lowerBound,
       "before"
     );
-
-
-    // Ligne du mot cible (partiellement dévoilé)
-    rowTarget.innerHTML = "";
-
-    for (let i = 0; i < wordLength; i++) {
-
-      const tile =
-        document.createElement("div");
-
-      tile.className = "bound-tile";
-
-      if (i < knownPrefixLength) {
-
-        tile.classList.add("known");
-
-        tile.textContent =
-          normalizeWord(lowerBound)[i];
-
-      } else {
-
-        tile.classList.add("unknown");
-
-        tile.textContent = "";
-
-      }
-
-      rowTarget.appendChild(tile);
-
-    }
 
 
     // Ligne du mot d'après
