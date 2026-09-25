@@ -1081,7 +1081,7 @@
 
   function renderVirtualKeyboard() {
     virtualKeyboard.innerHTML = "";
-    const letters = "AZERTYUIOPQSDFGHJKLMWXCVBN".split("");
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
     const knownPrefix = getKnownPrefix();
     const position = Math.min(knownPrefix.length, Math.max(0, wordLength - 1));
     const isAtRestrictedPosition = activePosition === position;
