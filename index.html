@@ -1550,7 +1550,16 @@ function startTodayResults() {
 
     const rows = snapshot.docs
       .map(d => d.data())
-      .filter(d => d.finished);
+      .filter(d => d.finished)
+      .sort((a, b) => {
+        const wonA = a.guesses && a.guesses.some(g => g.result === "correct");
+        const wonB = b.guesses && b.guesses.some(g => g.result === "correct");
+        const pointsA = wonA ? Math.max(1, MAX_ATTEMPTS + 1 - a.attempts) : 0;
+        const pointsB = wonB ? Math.max(1, MAX_ATTEMPTS + 1 - b.attempts) : 0;
+
+        if (pointsB !== pointsA) return pointsB - pointsA; // plus de points d'abord
+        return a.attempts - b.attempts;                     // à égalité, moins d'essais d'abord
+      });
 
     if (!rows.length) {
       emptyNote.style.display = "block";
