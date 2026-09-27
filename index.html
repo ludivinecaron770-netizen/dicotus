@@ -452,10 +452,10 @@
       .key { height: 39px; font-size: 13px; }
       .guess-actions button { flex: 1; }
     }
-	  
+
     .today-result-row {
       display: grid;
-  	  grid-template-columns: 1fr 90px 70px;
+      grid-template-columns: 1fr 90px 70px;
       align-items: center;
       padding: 10px 5px;
       border-bottom: 1px solid #eee;
@@ -582,12 +582,12 @@
 
 
     <!-- ========================= -->
-    <!-- CLASSEMENT -->
+    <!-- CLASSEMENT DU MOIS EN COURS -->
     <!-- ========================= -->
 
     <div class="card">
       <div class="leaderboard-title">
-        🏆 Classement
+        🏆 Classement du mois
       </div>
       <div id="leaderboard">
         <div class="loading">
@@ -595,11 +595,30 @@
         </div>
       </div>
     </div>
-    
+
+    <!-- ========================= -->
+    <!-- RESULTATS DU JOUR -->
+    <!-- ========================= -->
+
     <div class="card">
       <h2 class="section-title">Résultats du jour</h2>
       <div id="today-results"></div>
       <p class="empty-note" id="today-results-empty" style="display:none;">Personne n'a encore joué aujourd'hui.</p>
+    </div>
+
+    <!-- ========================= -->
+    <!-- CLASSEMENT DU MOIS PRECEDENT -->
+    <!-- ========================= -->
+
+    <div class="card">
+      <div class="leaderboard-title">
+        📅 Classement du mois précédent
+      </div>
+      <div id="lastMonthLeaderboard">
+        <div class="loading">
+          Chargement...
+        </div>
+      </div>
     </div>
 
   </div>
@@ -620,17 +639,17 @@
   import {
     getFirestore,
     doc,
-	getDoc,
-	setDoc,
-	updateDoc,
-	collection,
-	query,
-	where,
-	onSnapshot,
-	orderBy,
-	limit,
-	getDocs,
-	increment
+    getDoc,
+    setDoc,
+    updateDoc,
+    collection,
+    query,
+    where,
+    onSnapshot,
+    orderBy,
+    limit,
+    getDocs,
+    increment
   } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 
@@ -907,6 +926,18 @@
 
 
   /* ============================================================
+     MOIS EN COURS (ex: "2026-10")
+     ============================================================ */
+
+  function getMonthId() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    return `${year}-${month}`;
+  }
+
+
+  /* ============================================================
      AFFICHAGE DATE
      ============================================================ */
 
@@ -1179,6 +1210,7 @@
       {
         pseudo: pseudo,
         date: getDateString(),
+        month: getMonthId(),
         wordLength: wordLength,
         attempts: attempts,
         guesses: guesses,
@@ -1234,6 +1266,48 @@
         "info");
     }
     return true;
+  }
+
+
+  /* ============================================================
+     RESET MENSUEL DU CLASSEMENT
+
+     On considère que le mois "vient de commencer" si aucun
+     document dicoResults n'existe encore pour ce mois. Dans ce
+     cas, avant que quiconque n'ait joué, on sauvegarde le total
+     de chaque joueur dans lastMonthTotalDicoPoints puis on
+     remet totalDicoPoints (et les stats associées) à 0.
+     ============================================================ */
+
+  async function hasAnyGameThisMonth() {
+    const resultsRef = collection(db, RESULTS_COLLECTION);
+    const q = query(
+      resultsRef,
+      where("month", "==", getMonthId()),
+      limit(1)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  }
+
+  async function resetAllPlayersIfNeeded() {
+    const hasGame = await hasAnyGameThisMonth();
+    if (hasGame) return; // le mois a déjà commencé à être joué, rien à faire
+
+    const playersRef = collection(db, PLAYERS_COLLECTION);
+    const snapshot = await getDocs(playersRef);
+
+    const updates = snapshot.docs.map(docSnapshot => {
+      const data = docSnapshot.data();
+      return updateDoc(docSnapshot.ref, {
+        lastMonthTotalDicoPoints: data.totalDicoPoints || 0,
+        totalDicoPoints: 0,
+        dicoWins: 0,
+        dicoGames: 0
+      });
+    });
+
+    await Promise.all(updates);
   }
 
 
@@ -1469,7 +1543,7 @@
   }
 
   /* ============================================================
-     CLASSEMENT
+     CLASSEMENT DU MOIS EN COURS
      ============================================================ */
   async function loadLeaderboard() {
     leaderboard.innerHTML = `<div class="loading">Chargement...</div>`;
@@ -1530,71 +1604,127 @@
          </div>`;
     }
   }
-  
-function startTodayResults() {
-  const todayForQuery = getDateString();
-  const q = query(
-    collection(db, RESULTS_COLLECTION),
-    where("date", "==", todayForQuery)
-  );
 
-  onSnapshot(q, (snapshot) => {
-    const list = document.getElementById("today-results");
-    const emptyNote = document.getElementById("today-results-empty");
-    list.innerHTML = "";
 
-    if (snapshot.empty) {
-      emptyNote.style.display = "block";
-      return;
-    }
+  /* ============================================================
+     CLASSEMENT DU MOIS PRECEDENT
+     ============================================================ */
+  async function loadLastMonthLeaderboard() {
+    const lastMonthLeaderboard = document.getElementById("lastMonthLeaderboard");
+    lastMonthLeaderboard.innerHTML = `<div class="loading">Chargement...</div>`;
+    try {
+      const playersRef = collection(db, PLAYERS_COLLECTION);
+      const q = query(
+        playersRef,
+        orderBy("lastMonthTotalDicoPoints", "desc"),
+        limit(50)
+      );
+      const snapshot = await getDocs(q);
+      lastMonthLeaderboard.innerHTML = "";
 
-    const rows = snapshot.docs
-      .map(d => d.data())
-      .filter(d => d.finished)
-      .sort((a, b) => {
-        const wonA = a.guesses && a.guesses.some(g => g.result === "correct");
-        const wonB = b.guesses && b.guesses.some(g => g.result === "correct");
-        const pointsA = wonA ? Math.max(1, MAX_ATTEMPTS + 1 - a.attempts) : 0;
-        const pointsB = wonB ? Math.max(1, MAX_ATTEMPTS + 1 - b.attempts) : 0;
+      if (snapshot.empty) {
+        lastMonthLeaderboard.innerHTML =
+          `<div class="loading">Aucune donnée pour le mois précédent.</div>`;
+        return;
+      }
 
-        if (pointsB !== pointsA) return pointsB - pointsA; // plus de points d'abord
-        return a.attempts - b.attempts;                     // à égalité, moins d'essais d'abord
+      let rank = 1;
+      snapshot.forEach(docSnapshot => {
+        const data = docSnapshot.data();
+        const row = document.createElement("div");
+        row.className = "leaderboard-row";
+        const rankElement = document.createElement("div");
+        rankElement.className = "rank";
+        rankElement.textContent = rank + ".";
+        const playerElement = document.createElement("div");
+        playerElement.className = "player";
+        playerElement.textContent = data.pseudo || "Joueur";
+        const pointsElement = document.createElement("div");
+        pointsElement.className = "points";
+        pointsElement.textContent = `${data.lastMonthTotalDicoPoints || 0} pts`;
+        row.appendChild(rankElement);
+        row.appendChild(playerElement);
+        row.appendChild(pointsElement);
+        lastMonthLeaderboard.appendChild(row);
+        rank++;
       });
-
-    if (!rows.length) {
-      emptyNote.style.display = "block";
-      return;
+    } catch (error) {
+      console.error("Erreur classement mois précédent :", error);
+      lastMonthLeaderboard.innerHTML =
+        `<div class="loading">Impossible de charger le classement.</div>`;
     }
+  }
 
-    emptyNote.style.display = "none";
 
-    rows.forEach((d) => {
-      const isYou = d.pseudo === pseudo;
-      const won = d.guesses && d.guesses.some(g => g.result === "correct");
-      const points = won ? Math.max(1, MAX_ATTEMPTS + 1 - d.attempts) : 0;
+  /* ============================================================
+     RESULTATS DU JOUR (temps réel)
+     ============================================================ */
 
-      const row = document.createElement("div");
-      row.className = "today-result-row";
+  function startTodayResults() {
+    const todayForQuery = getDateString();
+    const q = query(
+      collection(db, RESULTS_COLLECTION),
+      where("date", "==", todayForQuery)
+    );
 
-      const nameSpan = document.createElement("span");
-      nameSpan.className = "player";
-      nameSpan.textContent = d.pseudo + (isYou ? " (toi)" : "");
+    onSnapshot(q, (snapshot) => {
+      const list = document.getElementById("today-results");
+      const emptyNote = document.getElementById("today-results-empty");
+      list.innerHTML = "";
 
-      const attemptsSpan = document.createElement("span");
-      attemptsSpan.className = "attempts-col";
-      attemptsSpan.textContent = won ? (d.attempts + " essai(s)") : "Échec";
+      if (snapshot.empty) {
+        emptyNote.style.display = "block";
+        return;
+      }
 
-      const pointsSpan = document.createElement("span");
-      pointsSpan.className = "points-col";
-      pointsSpan.textContent = points + " pts";
+      const rows = snapshot.docs
+        .map(d => d.data())
+        .filter(d => d.finished)
+        .sort((a, b) => {
+          const wonA = a.guesses && a.guesses.some(g => g.result === "correct");
+          const wonB = b.guesses && b.guesses.some(g => g.result === "correct");
+          const pointsA = wonA ? Math.max(1, MAX_ATTEMPTS + 1 - a.attempts) : 0;
+          const pointsB = wonB ? Math.max(1, MAX_ATTEMPTS + 1 - b.attempts) : 0;
 
-      row.appendChild(nameSpan);
-      row.appendChild(attemptsSpan);
-      row.appendChild(pointsSpan);
-      list.appendChild(row);
+          if (pointsB !== pointsA) return pointsB - pointsA; // plus de points d'abord
+          return a.attempts - b.attempts;                     // à égalité, moins d'essais d'abord
+        });
+
+      if (!rows.length) {
+        emptyNote.style.display = "block";
+        return;
+      }
+
+      emptyNote.style.display = "none";
+
+      rows.forEach((d) => {
+        const isYou = d.pseudo === pseudo;
+        const won = d.guesses && d.guesses.some(g => g.result === "correct");
+        const points = won ? Math.max(1, MAX_ATTEMPTS + 1 - d.attempts) : 0;
+
+        const row = document.createElement("div");
+        row.className = "today-result-row";
+
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "player";
+        nameSpan.textContent = d.pseudo + (isYou ? " (toi)" : "");
+
+        const attemptsSpan = document.createElement("span");
+        attemptsSpan.className = "attempts-col";
+        attemptsSpan.textContent = won ? (d.attempts + " essai(s)") : "Échec";
+
+        const pointsSpan = document.createElement("span");
+        pointsSpan.className = "points-col";
+        pointsSpan.textContent = points + " pts";
+
+        row.appendChild(nameSpan);
+        row.appendChild(attemptsSpan);
+        row.appendChild(pointsSpan);
+        list.appendChild(row);
+      });
     });
-  });
-}
+  }
+
   /* ============================================================
      DEMARRAGE DU JEU
      ============================================================ */
@@ -1627,8 +1757,10 @@ function startTodayResults() {
       );
       renderBoundsGrid();
       await loadSavedGame();
+      await resetAllPlayersIfNeeded();
       await loadLeaderboard();
-	  startTodayResults();
+      await loadLastMonthLeaderboard();
+      startTodayResults();
       if (!gameFinished) {
         renderGuessBoxes();
       }
