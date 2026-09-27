@@ -1285,7 +1285,6 @@
       );
     }
     loadLeaderboard();
-    startTodayResults();
   }
 
 
@@ -1594,6 +1593,7 @@
       renderBoundsGrid();
       await loadSavedGame();
       await loadLeaderboard();
+	  startTodayResults();
       if (!gameFinished) {
         renderGuessBoxes();
       }
