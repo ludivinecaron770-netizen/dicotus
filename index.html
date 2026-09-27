@@ -452,6 +452,27 @@
       .key { height: 39px; font-size: 13px; }
       .guess-actions button { flex: 1; }
     }
+	  
+    .today-result-row {
+      display: grid;
+  	  grid-template-columns: 1fr 90px 70px;
+      align-items: center;
+      padding: 10px 5px;
+      border-bottom: 1px solid #eee;
+    }
+    .today-result-row:last-child {
+      border-bottom: none;
+    }
+    .today-result-row .attempts-col {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+    .today-result-row .points-col {
+      text-align: right;
+      font-weight: bold;
+      color: #1976d2;
+    }
   </style>
 </head>
 
@@ -1541,23 +1562,28 @@
     rows.forEach((d) => {
       const isYou = d.pseudo === pseudo;
       const won = d.guesses && d.guesses.some(g => g.result === "correct");
-      const attemptsText = won ? (d.attempts + " essai(s)") : "Échec";
+      const points = won ? Math.max(1, MAX_ATTEMPTS + 1 - d.attempts) : 0;
 
       const row = document.createElement("div");
-      row.className = "leaderboard-row";
+      row.className = "today-result-row";
 
       const nameSpan = document.createElement("span");
       nameSpan.className = "player";
       nameSpan.textContent = d.pseudo + (isYou ? " (toi)" : "");
 
       const attemptsSpan = document.createElement("span");
-      attemptsSpan.textContent = attemptsText;
+      attemptsSpan.className = "attempts-col";
+      attemptsSpan.textContent = won ? (d.attempts + " essai(s)") : "Échec";
+
+      const pointsSpan = document.createElement("span");
+      pointsSpan.className = "points-col";
+      pointsSpan.textContent = points + " pts";
 
       row.appendChild(nameSpan);
       row.appendChild(attemptsSpan);
+      row.appendChild(pointsSpan);
       list.appendChild(row);
-	  });
-	});
+    });
   }
 
   /* ============================================================
