@@ -1508,33 +1508,55 @@
          </div>`;
     }
   }
+  function escapeHtml(str) {return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  }
   
   function startTodayResults() {
-    const todayForQuery = getLocalDateStr();
-	const q = query(collection(db, "motusResults"), where("date", "==", todayForQuery));
-	onSnapshot(q, (snapshot) => {
-	const list = document.getElementById("today-results");
-	const emptyNote = document.getElementById("today-results-empty");
-	list.innerHTML = "";
+    const todayForQuery = getDateString();
+    const q = query(
+    collection(db, RESULTS_COLLECTION),
+    where("date", "==", todayForQuery)
+    );
 
-	if (snapshot.empty) { emptyNote.style.display = "block"; return; }
-	emptyNote.style.display = "none";
-	const rows = snapshot.docs.map(d => d.data()).filter(d => d.finished).sort((a, b) => b.points - a.points);
+    onSnapshot(q, (snapshot) => {
+      const list = document.getElementById("today-results");
+      const emptyNote = document.getElementById("today-results-empty");
+      list.innerHTML = "";
 
-	if (!rows.length) { emptyNote.style.display = "block"; return; }
-	  rows.forEach((d) => {
-	  const isYou = d.pseudo === currentPseudo;
-	  const row = document.createElement("div");
-	  row.className = "board-row";
-	  row.innerHTML = `
-		<span class="name">
-		  ${escapeHtml(d.pseudo || "?")}
-		  ${isYou ? '<span class="you-tag">TOI</span>' : ""}
-		</span>
-		<span class="streak">${d.solved ? `${d.attempts} essai(s)` : "Échec"}</span>
-		<span class="points">${d.points}</span>;
-	    list.appendChild(row);
-	  });
+    if (snapshot.empty) {
+      emptyNote.style.display = "block";
+      return;
+    }
+
+    const rows = snapshot.docs
+      .map(d => d.data())
+      .filter(d => d.finished)
+      .sort((a, b) => (b.attempts != null ? a.attempts - b.attempts : 0));
+
+    if (!rows.length) {
+      emptyNote.style.display = "block";
+      return;
+    }
+
+    emptyNote.style.display = "none";
+
+    rows.forEach((d) => {
+      const isYou = d.pseudo === pseudo;
+      const won = d.guesses?.some(g => g.result === "correct");
+      const row = document.createElement("div");
+      row.className = "leaderboard-row";
+      row.innerHTML = `
+        <span class="rank"></span>
+        <span class="player">
+          ${escapeHtml(d.pseudo || "?")}
+          ${isYou ? " (toi)" : ""}
+        </span>
+        <span class="points">${won ? d.attempts + " essai(s)" : "Échec"}</span>;
+        list.appendChild(row);
+      });
     });
   }
 
