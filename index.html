@@ -1531,17 +1531,17 @@
     }
   }
   
-  function startTodayResults() {
-    const todayForQuery = getDateString();
-	const q = query(
-		collection(db, RESULTS_COLLECTION),
-		where("date", "==", todayForQuery)
-	);
+function startTodayResults() {
+  const todayForQuery = getDateString();
+  const q = query(
+    collection(db, RESULTS_COLLECTION),
+    where("date", "==", todayForQuery)
+  );
 
-	onSnapshot(q, (snapshot) => {
-		const list = document.getElementById("today-results");
-		const emptyNote = document.getElementById("today-results-empty");
-		list.innerHTML = "";
+  onSnapshot(q, (snapshot) => {
+    const list = document.getElementById("today-results");
+    const emptyNote = document.getElementById("today-results-empty");
+    list.innerHTML = "";
 
     if (snapshot.empty) {
       emptyNote.style.display = "block";
@@ -1584,8 +1584,8 @@
       row.appendChild(pointsSpan);
       list.appendChild(row);
     });
-  }
-
+  });
+}
   /* ============================================================
      DEMARRAGE DU JEU
      ============================================================ */
