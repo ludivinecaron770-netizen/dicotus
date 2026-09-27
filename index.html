@@ -467,11 +467,8 @@
   <!-- ========================= -->
 
   <div id="pseudoSection" class="card">
-
     <h2>Bienvenue !</h2>
-
     <p>Choisis simplement un pseudo pour jouer.</p>
-
     <input
       type="text"
       id="pseudoInput"
@@ -479,13 +476,10 @@
       placeholder="Ton pseudo"
       autocomplete="off"
     >
-
     <br>
-
     <button id="startButton">
       Jouer
     </button>
-
   </div>
 
 
@@ -494,43 +488,14 @@
   <!-- ========================= -->
 
   <div id="gameSection" class="hidden">
-
     <div class="card">
-
       <div class="game-title">
         Le mot du jour
       </div>
-
       <div class="date" id="todayDate"></div>
-
       <div class="word-length">
         Mot mystère : <span id="wordLength"></span> lettres
       </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     <!-- ========================= -->
@@ -538,30 +503,24 @@
     <!-- ========================= -->
 
     <div class="card">
-
       <div class="bounds-title">
         Où se situe le mot mystère ?
       </div>
-
       <div class="bound-block">
         <div class="bound-caption">↑ Mot d'avant</div>
         <div id="rowBefore" class="bound-row"></div>
       </div>
-
       <div class="bound-divider">···</div>
-
       <div class="bound-block">
         <div class="bound-caption">Ton mot</div>
         <div id="guessBoxes" class="guess-boxes" aria-label="Saisie du mot"></div>
       </div>
-
       <div class="bound-divider">···</div>
-
       <div class="bound-block">
         <div id="rowAfter" class="bound-row"></div>
         <div class="bound-caption" style="margin-top:6px;">↓ Mot d'après</div>
       </div>
-      
+     
 
       <!-- MESSAGE -->
 
@@ -577,7 +536,6 @@
         <button id="backspaceButton" class="secondary-button" type="button">⌫</button>
         <button id="guessButton" type="button">Valider</button>
       </div>
-
       <div class="attempts">
         Tentatives : <span id="attemptCount">0</span>
       </div>
@@ -593,17 +551,12 @@
     <!-- ========================= -->
 
     <div id="result" class="card hidden">
-
       <div class="result-title" id="resultTitle"></div>
-
       <div>
         Le mot était :
       </div>
-
       <div class="result-word" id="resultWord"></div>
-
       <div class="result-points" id="resultPoints"></div>
-
     </div>
 
 
@@ -612,17 +565,20 @@
     <!-- ========================= -->
 
     <div class="card">
-
       <div class="leaderboard-title">
         🏆 Classement
       </div>
-
       <div id="leaderboard">
         <div class="loading">
           Chargement...
         </div>
       </div>
-
+    </div>
+    
+    <div class="card">
+      <h2 class="section-title">Résultats du jour</h2>
+      <div id="today-results"></div>
+      <p class="empty-note" id="today-results-empty" style="display:none;">Personne n'a encore joué aujourd'hui.</p>
     </div>
 
   </div>
@@ -656,26 +612,17 @@
 
 
   const firebaseConfig = {
-
     apiKey: "AIzaSyAPOWsMjLLVOwboJuvcxdYrCTwh2yT9mJM",
-
     authDomain: "dicotus-adbec.firebaseapp.com",
-
     projectId: "dicotus-adbec",
-
     storageBucket: "dicotus-adbec.firebasestorage.app",
-
     messagingSenderId: "399883509375",
-
     appId: "1:399883509375:web:2765aaf0f2e176a85d694a",
-
     measurementId: "G-1MGRJZ03HN"
-
   };
 
 
   const app = initializeApp(firebaseConfig);
-
   const db = getFirestore(app);
 
 
@@ -684,11 +631,8 @@
      ============================================================ */
 
   const START_DATE = "2026-09-23";
-
   const MAX_ATTEMPTS = 20;
-
   const RESULTS_COLLECTION = "dicoResults";
-
   const PLAYERS_COLLECTION = "players";
 
 
@@ -697,23 +641,14 @@
      ============================================================ */
 
   let secretWords = [];
-
   let acceptedWords = new Set();
-
   let secretWord = "";
-
   let wordLength = 0;
-
   let pseudo = "";
-
   let attempts = 0;
-
   let guesses = [];
-
   let lowerBound = null;
-
   let upperBound = null;
-
   let gameFinished = false;
   let currentGuess = [];
   let activePosition = 0;
@@ -725,53 +660,37 @@
 
   const pseudoSection =
     document.getElementById("pseudoSection");
-
   const gameSection =
     document.getElementById("gameSection");
-
   const pseudoInput =
     document.getElementById("pseudoInput");
-
   const startButton =
     document.getElementById("startButton");
-
   const guessBoxes = document.getElementById("guessBoxes");
   const virtualKeyboard = document.getElementById("virtualKeyboard");
   const backspaceButton = document.getElementById("backspaceButton");
-
   const guessButton =
     document.getElementById("guessButton");
-
   const message =
     document.getElementById("message");
-
   const rowBefore =
     document.getElementById("rowBefore");
-
   const rowAfter =
     document.getElementById("rowAfter");
-
   const attemptCount =
     document.getElementById("attemptCount");
-
   const wordLengthElement =
     document.getElementById("wordLength");
-
   const todayDate =
     document.getElementById("todayDate");
-
   const result =
     document.getElementById("result");
-
   const resultTitle =
     document.getElementById("resultTitle");
-
   const resultWord =
     document.getElementById("resultWord");
-
   const resultPoints =
     document.getElementById("resultPoints");
-
   const leaderboard =
     document.getElementById("leaderboard");
 
@@ -781,14 +700,12 @@
      ============================================================ */
 
   function normalizeWord(word) {
-
     return String(word)
       .trim()
       .toUpperCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^A-Z]/g, "");
-
   }
 
 
@@ -797,7 +714,6 @@
      ============================================================ */
 
   function compareWords(a, b) {
-
     return a.localeCompare(
       b,
       "fr",
@@ -805,7 +721,6 @@
         sensitivity: "base"
       }
     );
-
   }
 
 
@@ -814,31 +729,18 @@
      ============================================================ */
 
   function extractWords(data) {
-
     let words = [];
-
     if (Array.isArray(data)) {
-
-      words = data;
-
-    } else if (data && Array.isArray(data.words)) {
-
-      words = data.words;
-
-    } else if (data && Array.isArray(data.mots)) {
-
-      words = data.mots;
-
-    } else if (data && Array.isArray(data.wordsOfTheDay)) {
-
-      words = data.wordsOfTheDay;
-
-    }
-
+      words = data;} 
+    else if (data && Array.isArray(data.words)) {
+      words = data.words;}
+    else if (data && Array.isArray(data.mots)) {
+      words = data.mots;}
+    else if (data && Array.isArray(data.wordsOfTheDay)) {
+      words = data.wordsOfTheDay;}
     return words
       .map(normalizeWord)
       .filter(word => word.length > 0);
-
   }
 
 
@@ -847,34 +749,24 @@
      ============================================================ */
 
   async function loadSecretWords() {
-
     const response =
       await fetch("mots_du_jour.json", {
         cache: "no-cache"
       });
-
     if (!response.ok) {
-
       throw new Error(
         "Impossible de charger mot_du_jour.json"
       );
-
     }
-
     const data =
       await response.json();
-
     secretWords =
       extractWords(data);
-
     if (secretWords.length === 0) {
-
       throw new Error(
         "mot_du_jour.json ne contient aucun mot."
       );
-
     }
-
   }
 
 
@@ -883,20 +775,15 @@
      ============================================================ */
 
   async function loadAcceptedWords() {
-
     const response =
       await fetch("mots_acceptes.json", {
         cache: "no-cache"
       });
-
     if (!response.ok) {
-
       throw new Error(
         "Impossible de charger mot_acceptes.json"
       );
-
     }
-
     const data =
       await response.json();
 
@@ -913,11 +800,8 @@
     */
 
     for (const word of secretWords) {
-
       acceptedWords.add(word);
-
     }
-
   }
 
 
@@ -926,41 +810,34 @@
      ============================================================ */
 
   function getTodayWord() {
-
     const today =
       new Date();
-
     const start =
       new Date(START_DATE + "T00:00:00");
-
     const todayUTC =
       Date.UTC(
         today.getFullYear(),
         today.getMonth(),
         today.getDate()
       );
-
     const startUTC =
       Date.UTC(
         start.getFullYear(),
         start.getMonth(),
         start.getDate()
       );
-
     const diff =
       Math.floor(
         (todayUTC - startUTC)
         /
         (1000 * 60 * 60 * 24)
       );
-
     const index =
       ((diff % secretWords.length)
       + secretWords.length)
       % secretWords.length;
 
     return secretWords[index];
-
   }
 
 
@@ -969,11 +846,9 @@
      ============================================================ */
 
   function getPseudoId() {
-
     return normalizeWord(pseudo)
       .toLowerCase()
       .replace(/[^a-z0-9]/g, "_");
-
   }
 
 
@@ -982,12 +857,10 @@
      ============================================================ */
 
   function getGameId() {
-
     const today =
       getDateString();
 
     return today + "_" + getPseudoId();
-
   }
 
 
@@ -996,23 +869,17 @@
      ============================================================ */
 
   function getDateString() {
-
     const now =
       new Date();
-
     const year =
       now.getFullYear();
-
     const month =
       String(now.getMonth() + 1)
         .padStart(2, "0");
-
     const day =
       String(now.getDate())
         .padStart(2, "0");
-
     return `${year}-${month}-${day}`;
-
   }
 
 
@@ -1021,10 +888,8 @@
      ============================================================ */
 
   function displayDate() {
-
     const date =
       new Date();
-
     todayDate.textContent =
       date.toLocaleDateString(
         "fr-FR",
@@ -1035,7 +900,6 @@
           year: "numeric"
         }
       );
-
   }
 
 
@@ -1194,20 +1058,13 @@
 
   function setMessage(
     text,
-    type = "info"
-  ) {
-
-    message.textContent =
-      text;
-
+    type = "info") {
+    message.textContent = text;
     message.className = "";
-
     message.id = "message";
-
     message.classList.add(
       "message-" + type
     );
-
   }
 
 
@@ -1223,13 +1080,9 @@
      ============================================================ */
 
   function renderBoundsGrid() {
-
     document.body.style.setProperty(
       "--word-length",
-      wordLength
-    );
-
-
+      wordLength);
     syncGuessWithKnownPrefix();
     renderGuessBoxes();
 
@@ -1237,54 +1090,35 @@
     renderBoundRow(
       rowBefore,
       lowerBound,
-      "before"
-    );
-
+      "before");
 
     // Ligne du mot d'après
     renderBoundRow(
       rowAfter,
       upperBound,
-      "after"
-    );
-
+      "after");
   }
-
 
   function renderBoundRow(
     container,
     word,
-    styleClass
-  ) {
-
+    styleClass) 
+    {
     container.innerHTML = "";
-
     for (let i = 0; i < wordLength; i++) {
-
       const tile =
         document.createElement("div");
-
-      tile.className = "bound-tile";
-
+        tile.className = "bound-tile";
       if (word) {
-
         tile.classList.add(styleClass);
-
         tile.textContent =
-          normalizeWord(word)[i] || "";
-
-      } else {
-
+          normalizeWord(word)[i] || "";}
+      else {
         tile.classList.add("empty");
-
         tile.textContent = "";
-
       }
-
       container.appendChild(tile);
-
     }
-
   }
 
 
@@ -1293,7 +1127,6 @@
      ============================================================ */
 
   function calculatePoints() {
-
     /*
        Plus le mot est trouvé rapidement,
        plus le score est important.
@@ -1301,9 +1134,7 @@
 
     return Math.max(
       1,
-      MAX_ATTEMPTS + 1 - attempts
-    );
-
+      MAX_ATTEMPTS + 1 - attempts);
   }
 
 
@@ -1312,7 +1143,6 @@
      ============================================================ */
 
   async function saveGame() {
-
     const gameRef =
       doc(
         db,
@@ -1334,15 +1164,13 @@
         finished: gameFinished,
         won:
           guesses.some(
-            item => item.result === "correct"
-          ),
-        updatedAt: Date.now()
+            item => item.result === "correct"),
+          updatedAt: Date.now()
       },
       {
         merge: true
       }
     );
-
   }
 
 
@@ -1358,64 +1186,31 @@
         RESULTS_COLLECTION,
         getGameId()
       );
-
     const snapshot =
       await getDoc(gameRef);
-
-
     if (!snapshot.exists()) {
-
       return false;
-
     }
-
-
-    const data =
-      snapshot.data();
-
-
-    attempts =
-      data.attempts || 0;
-
-    guesses =
-      data.guesses || [];
-
-    lowerBound =
-      data.lowerBound || null;
-
-    upperBound =
-      data.upperBound || null;
-
-    gameFinished =
-      data.finished || false;
-
-
-    attemptCount.textContent =
-      attempts;
-
+    const data = snapshot.data();
+    attempts = data.attempts || 0;
+    guesses = data.guesses || [];
+    lowerBound = data.lowerBound || null;
+    upperBound = data.upperBound || null;
+    gameFinished = data.finished || false;
+    attemptCount.textContent = attempts;
     renderBoundsGrid();
-
     renderVirtualKeyboard();
-
-
     if (gameFinished) {
 
       showFinishedGame(
-        data.won === true
-      );
-
-    } else {
-
+        data.won === true);
+    }
+    else {
       setMessage(
         "Tu peux continuer ta partie.",
-        "info"
-      );
-
+        "info");
     }
-
-
     return true;
-
   }
 
 
@@ -1424,81 +1219,43 @@
      ============================================================ */
 
   async function finishGame(won) {
-
     gameFinished = true;
-
-
     guessButton.disabled = true;
-
-
     const points =
       won
         ? calculatePoints()
         : 0;
-
-
     result.classList.remove("hidden");
 
-
     if (won) {
-
-      resultTitle.textContent =
-        "🎉 Bravo !";
-
-      resultPoints.textContent =
-        `Tu gagnes ${points} point${points > 1 ? "s" : ""}.`;
-
+      resultTitle.textContent = "🎉 Bravo !";
+      resultPoints.textContent = `Tu gagnes ${points} point${points > 1 ? "s" : ""}.`;
       setMessage(
         "Mot trouvé !",
-        "success"
-      );
-
-    } else {
-
-      resultTitle.textContent =
-        "Partie terminée";
-
-      resultPoints.textContent =
-        "0 point";
-
+        "success");
+    } 
+    else {
+      resultTitle.textContent = "Partie terminée";
+      resultPoints.textContent = "0 point";
       setMessage(
         "Dommage, le nombre maximum de tentatives est atteint.",
-        "error"
-      );
-
+        "error");
     }
-
-
-    resultWord.textContent =
-      secretWord;
-
-
+    resultWord.textContent = secretWord;
     await saveGame();
-
 
     /*
        Mise à jour du classement.
     */
-
-    const playerId =
-      getPseudoId();
-
+    const playerId = getPseudoId();
     const playerRef =
-      doc(
+	  doc(
         db,
         PLAYERS_COLLECTION,
-        playerId
-      );
-
-
+        playerId);
     try {
-
-      const playerSnapshot =
-        await getDoc(playerRef);
-
-
+      const playerSnapshot = await getDoc(playerRef);
       if (!playerSnapshot.exists()) {
-
         await setDoc(
           playerRef,
           {
@@ -1508,37 +1265,25 @@
             dicoGames: 1
           }
         );
-
-      } else {
-
+      } 
+      else {
         await updateDoc(
           playerRef,
           {
-            totalDicoPoints:
-              increment(points),
-
-            dicoWins:
-              increment(won ? 1 : 0),
-
-            dicoGames:
-              increment(1)
+            totalDicoPoints:increment(points),
+            dicoWins:increment(won ? 1 : 0),
+            dicoGames:increment(1)
           }
         );
-
       }
-
     } catch (error) {
-
       console.error(
         "Erreur classement :",
         error
       );
-
     }
-
-
     loadLeaderboard();
-
+    startTodayResults
   }
 
 
@@ -1549,45 +1294,25 @@
   function showFinishedGame(won) {
 
     result.classList.remove("hidden");
-
-    resultWord.textContent =
-      secretWord;
-
-
+    resultWord.textContent = secretWord;
     if (won) {
-
-      resultTitle.textContent =
-        "🎉 Partie déjà terminée";
-
-      resultPoints.textContent =
-        "Tu as déjà trouvé le mot aujourd'hui.";
-
+      resultTitle.textContent = "🎉 Partie déjà terminée";
+      resultPoints.textContent = "Tu as déjà trouvé le mot aujourd'hui.";
       setMessage(
         "Tu as déjà joué aujourd'hui.",
         "success"
       );
-
-    } else {
-
-      resultTitle.textContent =
-        "Partie déjà terminée";
-
-      resultPoints.textContent =
-        "Cette partie est terminée.";
-
+    } 
+    else {
+      resultTitle.textContent = "Partie déjà terminée";
+      resultPoints.textContent = "Cette partie est terminée.";
       setMessage(
         "Tu as déjà terminé ta partie aujourd'hui.",
         "error"
       );
-
     }
-
-
-
     guessButton.disabled = true;
-
   }
-
 
   /* ============================================================
      PROPOSITION D'UN MOT
@@ -1596,252 +1321,138 @@
   async function submitGuess() {
 
     if (gameFinished) {
-
       return;
-
     }
-
-
     const guess = getCurrentGuess();
 
     /* Mot vide / incomplet */
     if (!guess || guess.length !== wordLength) {
-
       setMessage(
         "Entre un mot.",
         "error"
       );
-
       return;
-
     }
 
-
     /* Mauvaise longueur */
-
     if (guess.length !== wordLength) {
-
       setMessage(
         `Le mot doit comporter ${wordLength} lettres.`,
         "error"
       );
-
       renderGuessBoxes();
-
       return;
-
     }
 
 
     /* Mot déjà proposé */
-
-    if (
-      guesses.some(
-        item => item.word === guess
-      )
-    ) {
-
+    if (guesses.some(item => item.word === guess)) 
+    {
       setMessage(
         "Tu as déjà proposé ce mot.",
         "error"
       );
-
       renderGuessBoxes();
-
       return;
-
     }
-
 
     /*
        Vérification du dictionnaire.
     */
-
     if (!acceptedWords.has(guess)) {
-
       setMessage(
         "Ce mot n'est pas dans le dictionnaire.",
         "error"
       );
-
       renderGuessBoxes();
-
       return;
-
     }
-
-
-    if (
-      lowerBound &&
-      compareWords(guess, lowerBound) <= 0
-    ) {
-
+    if (lowerBound && compareWords(guess, lowerBound) <= 0) 
+    {
       setMessage(
         `Le mot doit être après ${lowerBound}.`,
         "error"
       );
-
       renderGuessBoxes();
-
       return;
-
     }
-
-
-    if (
-      upperBound &&
-      compareWords(guess, upperBound) >= 0
-    ) {
-
+    if (upperBound && compareWords(guess, upperBound) >= 0) 
+    {
       setMessage(
         `Le mot doit être avant ${upperBound}.`,
         "error"
       );
-
       renderGuessBoxes();
-
       return;
-
     }
-
-
     attempts++;
-
-    attemptCount.textContent =
-      attempts;
-
+    attemptCount.textContent = attempts;
 
     /* ==========================================
        MOT TROUVÉ
        ========================================== */
-
-    if (
-      compareWords(
-        guess,
-        secretWord
-      ) === 0
-    ) {
-
+    if (compareWords(guess,secretWord) === 0) 
+    {
       guesses.push({
         word: guess,
         result: "correct"
       });
-
-
       lowerBound = guess;
       upperBound = guess;
-
       renderBoundsGrid();
-
       renderVirtualKeyboard();
-
       await finishGame(true);
-
       return;
-
     }
-
 
     /* ==========================================
        AVANT
        ========================================== */
-
-    if (
-      compareWords(
-        guess,
-        secretWord
-      ) < 0
-    ) {
-
-      lowerBound =
-        guess;
-
-
+    if (compareWords(guess,secretWord) < 0) 
+    {
+      lowerBound = guess;
       guesses.push({
         word: guess,
         result: "before"
       });
-
-
       setMessage(
         "AVANT le mot mystère",
         "before"
       );
-
     }
-
 
     /* ==========================================
        APRÈS
        ========================================== */
-
     else {
-
-      upperBound =
-        guess;
-
-
-      guesses.push({
-        word: guess,
-        result: "after"
-      });
-
-
+	  upperBound = guess; 
+	  guesses.push({ word: guess,result: "after"});
       setMessage(
         "APRÈS le mot mystère",
         "after"
       );
-
     }
-
-
     renderBoundsGrid();
-
     renderVirtualKeyboard();
-
-
     await saveGame();
-
-
-    if (
-      attempts >= MAX_ATTEMPTS
-    ) {
-
+    if (attempts >= MAX_ATTEMPTS) 
+    {
       await finishGame(false);
-
       return;
-
     }
-
-
     currentGuess = getKnownPrefix().split("");
     activePosition = Math.min(currentGuess.length, Math.max(0, wordLength - 1));
-
     renderGuessBoxes();
     renderVirtualKeyboard();
-
   }
-
 
   /* ============================================================
      CLASSEMENT
      ============================================================ */
-
   async function loadLeaderboard() {
-
-    leaderboard.innerHTML =
-      `<div class="loading">Chargement...</div>`;
-
-
+    leaderboard.innerHTML = `<div class="loading">Chargement...</div>`;
     try {
-
-      const playersRef =
-        collection(
-          db,
-          PLAYERS_COLLECTION
-        );
-
-
+      const playersRef = collection(db,PLAYERS_COLLECTION);
       const q =
         query(
           playersRef,
@@ -1851,213 +1462,129 @@
           ),
           limit(50)
         );
-
-
-      const snapshot =
-        await getDocs(q);
-
-
+      const snapshot = await getDocs(q);
       leaderboard.innerHTML = "";
-
-
       if (snapshot.empty) {
-
         leaderboard.innerHTML =
           `<div class="loading">
              Aucun joueur pour le moment.
            </div>`;
-
         return;
-
       }
 
-
       let rank = 1;
-
-
       snapshot.forEach(docSnapshot => {
-
-        const data =
-          docSnapshot.data();
-
-
-        const row =
-          document.createElement("div");
-
-        row.className =
-          "leaderboard-row";
-
-
-        const rankElement =
-          document.createElement("div");
-
-        rankElement.className =
-          "rank";
-
-        rankElement.textContent =
-          rank + ".";
-
-
-        const playerElement =
-          document.createElement("div");
-
-        playerElement.className =
-          "player";
-
-        playerElement.textContent =
-          data.pseudo || "Joueur";
-
-
-        const pointsElement =
-          document.createElement("div");
-
-        pointsElement.className =
-          "points";
-
-        pointsElement.textContent =
-          `${data.totalDicoPoints || 0} pts`;
-
-
+        const data = docSnapshot.data();
+        const row = document.createElement("div");
+        row.className = "leaderboard-row";
+        const rankElement = document.createElement("div");
+        rankElement.className = "rank";
+        rankElement.textContent = rank + ".";
+        const playerElement = document.createElement("div");
+        playerElement.className = "player";
+        playerElement.textContent = data.pseudo || "Joueur";
+        const pointsElement = document.createElement("div");
+        pointsElement.className = "points";
+        pointsElement.textContent = `${data.totalDicoPoints || 0} pts`;
         row.appendChild(
           rankElement
         );
-
         row.appendChild(
           playerElement
         );
-
         row.appendChild(
           pointsElement
         );
-
-
         leaderboard.appendChild(row);
-
-
         rank++;
-
       });
-
     } catch (error) {
-
-      console.error(
-        "Erreur classement :",
+        console.error("Erreur classement :",
         error
       );
-
-
       leaderboard.innerHTML =
         `<div class="loading">
            Impossible de charger le classement.
          </div>`;
-
     }
-
   }
+  
+  function startTodayResults() {
+    const todayForQuery = getLocalDateStr();
+	const q = query(collection(db, "motusResults"), where("date", "==", todayForQuery));
+	onSnapshot(q, (snapshot) => {
+	const list = document.getElementById("today-results");
+	const emptyNote = document.getElementById("today-results-empty");
+	list.innerHTML = "";
 
+	if (snapshot.empty) { emptyNote.style.display = "block"; return; }
+	emptyNote.style.display = "none";
+	const rows = snapshot.docs.map(d => d.data()).filter(d => d.finished).sort((a, b) => b.points - a.points);
+
+	if (!rows.length) { emptyNote.style.display = "block"; return; }
+	  rows.forEach((d) => {
+	  const isYou = d.pseudo === currentPseudo;
+	  const row = document.createElement("div");
+	  row.className = "board-row";
+	  row.innerHTML = `
+		<span class="name">
+		  ${escapeHtml(d.pseudo || "?")}
+		  ${isYou ? '<span class="you-tag">TOI</span>' : ""}
+		</span>
+		<span class="streak">${d.solved ? `${d.attempts} essai(s)` : "Échec"}</span>
+		<span class="points">${d.points}</span>;
+	    list.appendChild(row);
+	  });
+    });
+  }
 
   /* ============================================================
      DEMARRAGE DU JEU
      ============================================================ */
 
   async function startGame() {
-
-    const enteredPseudo =
-      pseudoInput.value.trim();
-
-
+    const enteredPseudo = pseudoInput.value.trim();
     if (!enteredPseudo) {
-
-      alert(
-        "Entre un pseudo."
-      );
-
+      alert("Entre un pseudo.");
       pseudoInput.focus();
-
       return;
-
     }
-
-
-    pseudo =
-      enteredPseudo;
-
-
+    pseudo =  enteredPseudo;
     localStorage.setItem(
       "dicoPseudo",
       pseudo
     );
-
-
-    startButton.disabled =
-      true;
-
-
+    startButton.disabled = true;
     try {
-
       await loadSecretWords();
-
       await loadAcceptedWords();
-
-
-      secretWord =
-        getTodayWord();
-
-
-      wordLength =
-        secretWord.length;
-
-
-      wordLengthElement.textContent =
-        wordLength;
-
-
+      secretWord = getTodayWord();
+      wordLength = secretWord.length;
+      wordLengthElement.textContent =  wordLength;
       displayDate();
-
-
       pseudoSection.classList.add(
         "hidden"
       );
-
       gameSection.classList.remove(
         "hidden"
       );
-
-
       renderBoundsGrid();
-
-
       await loadSavedGame();
-
-
       await loadLeaderboard();
-
-
       if (!gameFinished) {
-
         renderGuessBoxes();
-
       }
-
     } catch (error) {
-
       console.error(error);
-
-
       alert(
         error.message
         ||
         "Une erreur est survenue."
       );
-
-
       startButton.disabled =
         false;
-
     }
-
   }
-
 
   /* ============================================================
      EVENEMENTS
@@ -2067,52 +1594,39 @@
     "click",
     startGame
   );
-
-
   guessButton.addEventListener(
     "click",
     submitGuess
   );
-
-
   pseudoInput.addEventListener(
     "keydown",
     event => {
-
       if (
         event.key === "Enter"
       ) {
-
         startGame();
-
       }
-
     }
   );
 
-
   document.addEventListener("keydown", event => {
     if (gameFinished || gameSection.classList.contains("hidden")) return;
-
     if (/^[a-zA-ZÀ-ÿ]$/.test(event.key)) {
       event.preventDefault();
       const letter = normalizeWord(event.key);
       if (letter) enterLetter(letter);
       return;
     }
-
     if (event.key === "Backspace") {
       event.preventDefault();
       eraseLetter();
       return;
     }
-
     if (event.key === "Enter") {
       event.preventDefault();
       submitGuess();
       return;
     }
-
     if (event.key === "ArrowLeft") {
       event.preventDefault();
       const prefix = getKnownPrefix();
@@ -2120,7 +1634,6 @@
       renderGuessBoxes();
       renderVirtualKeyboard();
     }
-
     if (event.key === "ArrowRight") {
       event.preventDefault();
       activePosition = Math.min(wordLength - 1, activePosition + 1);
@@ -2128,24 +1641,15 @@
       renderVirtualKeyboard();
     }
   });
-
   backspaceButton.addEventListener("click", eraseLetter);
 
   /* ============================================================
      RESTAURATION DU PSEUDO
      ============================================================ */
 
-  const savedPseudo =
-    localStorage.getItem(
-      "dicoPseudo"
-    );
-
-
+  const savedPseudo = localStorage.getItem("dicoPseudo");
   if (savedPseudo) {
-
-    pseudoInput.value =
-      savedPseudo;
-
+    pseudoInput.value = savedPseudo;
   }
 
 </script>
