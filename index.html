@@ -1034,6 +1034,13 @@
     erase.textContent = "⌫";
     erase.addEventListener("click", eraseLetter);
     virtualKeyboard.appendChild(erase);
+
+    const valid = document.createElement("button");
+    valid.type = "button";
+    valid.className = "key action";
+    valid.textContent = "⌫";
+    /* valid.addEventListener("click", eraseLetter); */
+    virtualKeyboard.appendChild(valid);
   }
 
   function renderGuessBoxes() {
